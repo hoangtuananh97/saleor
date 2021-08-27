@@ -38,6 +38,7 @@ from ..enums import (
     WebhookErrorCode,
     WeightUnitsEnum,
     WishlistErrorCode,
+    CategoryCustomErrorCode,
 )
 from .money import VAT
 
@@ -432,3 +433,17 @@ class Job(graphene.Interface):
             # <DjangoModel>: <GrapheneType>
         }
         return MODEL_TO_TYPE_MAP.get(type(instance))
+
+
+class CategoryCustomError(Error):
+    code = CategoryCustomErrorCode(description="The error code.", required=True)
+    attributes = graphene.List(
+        graphene.NonNull(graphene.ID),
+        description="List of attributes IDs which causes the error.",
+        required=False,
+    )
+    values = graphene.List(
+        graphene.NonNull(graphene.ID),
+        description="List of attribute values IDs which causes the error.",
+        required=False,
+    )
