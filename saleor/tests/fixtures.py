@@ -25,8 +25,8 @@ from PIL import Image
 from prices import Money, TaxedMoney, fixed_discount
 
 from ..account.models import Address, StaffNotificationRecipient, User
-from ..app.models import App, AppInstallation
-from ..app.types import AppType
+from ..app.models import App, AppExtension, AppInstallation
+from ..app.types import AppExtensionTarget, AppExtensionType, AppExtensionView, AppType
 from ..attribute import AttributeEntityType, AttributeInputType, AttributeType
 from ..attribute.models import (
     Attribute,
@@ -38,7 +38,7 @@ from ..attribute.utils import associate_attribute_values_to_instance
 from ..checkout.fetch import fetch_checkout_info
 from ..checkout.models import Checkout
 from ..checkout.utils import add_variant_to_checkout
-from ..core import JobStatus
+from ..core import JobStatus, TimePeriodType
 from ..core.payments import PaymentInterface
 from ..core.units import MeasurementUnits
 from ..core.utils.editorjs import clean_editor_js
@@ -54,7 +54,8 @@ from ..discount.models import (
     VoucherCustomer,
     VoucherTranslation,
 )
-from ..giftcard.models import GiftCard
+from ..giftcard import GiftCardEvents, GiftCardExpiryType
+from ..giftcard.models import GiftCard, GiftCardEvent
 from ..menu.models import Menu, MenuItem, MenuItemTranslation
 from ..order import OrderLineData, OrderOrigin, OrderStatus
 from ..order.actions import cancel_fulfillment, fulfill_order_lines
@@ -63,7 +64,13 @@ from ..order.events import (
     fulfillment_refunded_event,
     order_added_products_event,
 )
-from ..order.models import FulfillmentStatus, Order, OrderEvent, OrderLine
+from ..order.models import (
+    FulfillmentLine,
+    FulfillmentStatus,
+    Order,
+    OrderEvent,
+    OrderLine,
+)
 from ..order.utils import recalculate_order
 from ..page.models import Page, PageTranslation, PageType
 from ..payment import ChargeStatus, TransactionKind
@@ -2550,30 +2557,107 @@ def order_line_with_one_allocation(
 
 
 @pytest.fixture
-def gift_card(customer_user, staff_user):
+def gift_card(customer_user):
     return GiftCard.objects.create(
-        code="mirumee_giftcard",
-        user=customer_user,
+        code="never_expiry",
+        created_by=customer_user,
+        created_by_email=customer_user.email,
         initial_balance=Money(10, "USD"),
         current_balance=Money(10, "USD"),
+        expiry_type=GiftCardExpiryType.NEVER_EXPIRE,
+        tag="test-tag",
     )
 
 
 @pytest.fixture
-def gift_card_used(staff_user):
+def gift_card_expiry_period(customer_user):
     return GiftCard.objects.create(
-        code="gift_card_used",
-        initial_balance=Money(150, "USD"),
+        code="expiry_period",
+        created_by=customer_user,
+        created_by_email=customer_user.email,
+        initial_balance=Money(10, "USD"),
+        current_balance=Money(10, "USD"),
+        expiry_type=GiftCardExpiryType.EXPIRY_PERIOD,
+        expiry_period_type=TimePeriodType.YEAR,
+        expiry_period=2,
+        tag="another-tag",
+    )
+
+
+@pytest.fixture
+def gift_card_expiry_date(customer_user):
+    return GiftCard.objects.create(
+        code="expiry_date",
+        created_by=customer_user,
+        created_by_email=customer_user.email,
+        initial_balance=Money(10, "USD"),
+        current_balance=Money(10, "USD"),
+        expiry_type=GiftCardExpiryType.EXPIRY_DATE,
+        expiry_date=datetime.date.today() + datetime.timedelta(days=100),
+        tag="another-tag",
+    )
+
+
+@pytest.fixture
+def gift_card_used(staff_user, customer_user):
+    return GiftCard.objects.create(
+        code="giftcard_used",
+        created_by=staff_user,
+        used_by=customer_user,
+        created_by_email=staff_user.email,
+        used_by_email=customer_user.email,
+        initial_balance=Money(100, "USD"),
         current_balance=Money(100, "USD"),
+        expiry_type=GiftCardExpiryType.NEVER_EXPIRE,
+        tag="tag",
     )
 
 
 @pytest.fixture
 def gift_card_created_by_staff(staff_user):
     return GiftCard.objects.create(
-        code="mirumee_staff",
-        initial_balance=Money(5, "USD"),
-        current_balance=Money(5, "USD"),
+        code="created_by_staff",
+        created_by=staff_user,
+        created_by_email=staff_user.email,
+        initial_balance=Money(10, "USD"),
+        current_balance=Money(10, "USD"),
+        expiry_type=GiftCardExpiryType.EXPIRY_PERIOD,
+        expiry_period_type=TimePeriodType.YEAR,
+        expiry_period=2,
+        tag="test-tag",
+    )
+
+
+@pytest.fixture
+def gift_card_event(gift_card, order, app, staff_user):
+    parameters = {
+        "message": "test message",
+        "email": "testemail@email.com",
+        "order_id": order.pk,
+        "tag": "test tag",
+        "old_tag": "test old tag",
+        "balance": {
+            "currency": "USD",
+            "initial_balance": 10,
+            "old_initial_balance": 20,
+            "current_balance": 10,
+            "old_current_balance": 5,
+        },
+        "expiry": {
+            "expiry_type": GiftCardExpiryType.EXPIRY_PERIOD,
+            "old_expiry_type": GiftCardExpiryType.EXPIRY_DATE,
+            "expiry_period_type": TimePeriodType.MONTH,
+            "expiry_period": 10,
+            "expiry_date": datetime.date(2050, 1, 1),
+        },
+    }
+    return GiftCardEvent.objects.create(
+        user=staff_user,
+        app=app,
+        gift_card=gift_card,
+        type=GiftCardEvents.UPDATED,
+        parameters=parameters,
+        date=timezone.now() + datetime.timedelta(days=10),
     )
 
 
@@ -2907,7 +2991,7 @@ def order_events(order):
 @pytest.fixture
 def fulfilled_order(order_with_lines):
     order = order_with_lines
-    invoice = order.invoices.create(
+    order.invoices.create(
         url="http://www.example.com/invoice.pdf",
         number="01/12/2020/TEST",
         created=datetime.datetime.now(tz=pytz.utc),
@@ -2931,6 +3015,7 @@ def fulfilled_order(order_with_lines):
                 line=line_2, quantity=line_2.quantity, warehouse_pk=warehouse_2_pk
             ),
         ],
+        manager=get_plugins_manager(),
     )
     order.status = OrderStatus.FULFILLED
     order.save(update_fields=["status"])
@@ -2948,7 +3033,8 @@ def fulfilled_order_without_inventory_tracking(
     warehouse_pk = stock.warehouse.pk
     fulfillment.lines.create(order_line=line, quantity=line.quantity, stock=stock)
     fulfill_order_lines(
-        [OrderLineData(line=line, quantity=line.quantity, warehouse_pk=warehouse_pk)]
+        [OrderLineData(line=line, quantity=line.quantity, warehouse_pk=warehouse_pk)],
+        get_plugins_manager(),
     )
     order.status = OrderStatus.FULFILLED
     order.save(update_fields=["status"])
@@ -2979,6 +3065,25 @@ def fulfilled_order_with_all_cancelled_fulfillments(
 @pytest.fixture
 def fulfillment(fulfilled_order):
     return fulfilled_order.fulfillments.first()
+
+
+@pytest.fixture
+def fulfillment_awaiting_approval(fulfilled_order):
+    order_line = fulfilled_order.lines.first()
+    order_line.quantity_fulfilled = 0
+    order_line.save(update_fields=["quantity_fulfilled"])
+
+    fulfillment = fulfilled_order.fulfillments.first()
+    fulfillment.status = FulfillmentStatus.WAITING_FOR_APPROVAL
+    fulfillment.save(update_fields=["status"])
+
+    fulfillment_lines_to_update = []
+    for f_line in fulfillment.lines.all():
+        f_line.quantity = 1
+        fulfillment_lines_to_update.append(f_line)
+    FulfillmentLine.objects.bulk_update(fulfillment_lines_to_update, ["quantity"])
+
+    return fulfillment
 
 
 @pytest.fixture
@@ -3977,6 +4082,33 @@ def app(db):
 
 
 @pytest.fixture
+def app_with_extensions(app, permission_manage_products):
+    first_app_extension = AppExtension(
+        app=app,
+        label="Create product with App",
+        url="www.example.com/app-product",
+        view=AppExtensionView.PRODUCT,
+        type=AppExtensionType.OVERVIEW,
+        target=AppExtensionTarget.MORE_ACTIONS,
+    )
+    extensions = AppExtension.objects.bulk_create(
+        [
+            first_app_extension,
+            AppExtension(
+                app=app,
+                label="Update product with App",
+                url="www.example.com/app-product-update",
+                view=AppExtensionView.PRODUCT,
+                type=AppExtensionType.DETAILS,
+                target=AppExtensionTarget.MORE_ACTIONS,
+            ),
+        ]
+    )
+    first_app_extension.permissions.add(permission_manage_products)
+    return app, extensions
+
+
+@pytest.fixture
 def payment_app(db, permission_manage_payments):
     app = App.objects.create(name="Payment App", is_active=True)
     app.tokens.create(name="Default")
@@ -4285,3 +4417,21 @@ def app_export_event(app_export_file):
         app=app_export_file.app,
         parameters={"message": "Example error message"},
     )
+
+
+@pytest.fixture
+def app_manifest():
+    return {
+        "name": "Sample Saleor App",
+        "version": "0.1",
+        "about": "Sample Saleor App serving as an example.",
+        "dataPrivacy": "",
+        "dataPrivacyUrl": "",
+        "homepageUrl": "http://172.17.0.1:5000/homepageUrl",
+        "supportUrl": "http://172.17.0.1:5000/supportUrl",
+        "id": "saleor-complex-sample",
+        "permissions": ["MANAGE_PRODUCTS", "MANAGE_USERS"],
+        "appUrl": "",
+        "configurationUrl": "http://127.0.0.1:5000/configuration/",
+        "tokenTargetUrl": "http://127.0.0.1:5000/configuration/install",
+    }
