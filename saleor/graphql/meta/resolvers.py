@@ -3,6 +3,7 @@ from operator import itemgetter
 from ...account import models as account_models
 from ...app import models as app_models
 from ...attribute import models as attribute_models
+from ...channel import models as channel_models
 from ...checkout import models as checkout_models
 from ...core.exceptions import PermissionDenied
 from ...core.models import ModelWithMetadata
@@ -13,7 +14,6 @@ from ...page import models as page_models
 from ...product import models as product_models
 from ...shipping import models as shipping_models
 from ...warehouse import models as warehouse_models
-from ...channel import models as channel_models
 from ..utils import get_user_or_app_from_context
 from .permissions import PRIVATE_META_PERMISSION_MAP
 
@@ -25,6 +25,7 @@ def resolve_object_with_metadata_type(instance: ModelWithMetadata):
     from ..account import types as account_types
     from ..app import types as app_types
     from ..attribute import types as attribute_types
+    from ..channel import types as channel_types
     from ..checkout import types as checkout_types
     from ..discount import types as discount_types
     from ..giftcard import types as giftcard_types
@@ -35,7 +36,6 @@ def resolve_object_with_metadata_type(instance: ModelWithMetadata):
     from ..product import types as product_types
     from ..shipping import types as shipping_types
     from ..warehouse import types as warehouse_types
-    from ..channel import types as channel_types
 
     MODEL_TO_TYPE_MAP = {
         app_models.App: app_types.App,

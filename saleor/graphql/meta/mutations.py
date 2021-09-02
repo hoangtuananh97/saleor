@@ -4,6 +4,7 @@ import graphene
 from django.core.exceptions import ValidationError
 from graphql.error.base import GraphQLError
 
+from ...channel import models as channel_models
 from ...core import models
 from ...core.error_codes import MetadataErrorCode
 from ...core.exceptions import PermissionDenied
@@ -11,7 +12,6 @@ from ...discount import models as discount_models
 from ...menu import models as menu_models
 from ...product import models as product_models
 from ...shipping import models as shipping_models
-from ...channel import models as channel_models
 from ..channel import ChannelContext
 from ..core.mutations import BaseMutation
 from ..core.types.common import MetadataError

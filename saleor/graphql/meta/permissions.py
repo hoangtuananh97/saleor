@@ -8,6 +8,7 @@ from ...core.permissions import (
     AccountPermissions,
     AppPermission,
     BasePermissionEnum,
+    ChannelPermissions,
     CheckoutPermissions,
     DiscountPermissions,
     GiftcardPermissions,
@@ -17,7 +18,7 @@ from ...core.permissions import (
     PageTypePermissions,
     ProductPermissions,
     ProductTypePermissions,
-    ShippingPermissions, ChannelPermissions,
+    ShippingPermissions,
 )
 
 
