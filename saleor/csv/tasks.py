@@ -1,5 +1,7 @@
 from typing import Dict, Union
 
+from .utils.product_variant_channel_list.export import \
+    export_products_variant_channel_list
 from ..celeryconf import app
 from ..core import JobStatus
 from . import events
@@ -40,11 +42,24 @@ def on_task_success(self, retval, task_id, args, kwargs):
 
 @app.task(on_success=on_task_success, on_failure=on_task_failure)
 def export_products_task(
-    export_file_id: int,
-    scope: Dict[str, Union[str, dict]],
-    export_info: Dict[str, list],
-    file_type: str,
-    delimiter: str = ";",
+        export_file_id: int,
+        scope: Dict[str, Union[str, dict]],
+        export_info: Dict[str, list],
+        file_type: str,
+        delimiter: str = ";",
 ):
     export_file = ExportFile.objects.get(pk=export_file_id)
     export_products(export_file, scope, export_info, file_type, delimiter)
+
+
+@app.task(on_success=on_task_success, on_failure=on_task_failure)
+def export_products_variant_channel_list_task(
+        export_file_id: int,
+        scope: Dict[str, Union[str, dict]],
+        export_info: Dict[str, list],
+        file_type: str,
+        delimiter: str = ";",
+):
+    export_file = ExportFile.objects.get(pk=export_file_id)
+    export_products_variant_channel_list(
+        export_file, scope, export_info, file_type, delimiter)

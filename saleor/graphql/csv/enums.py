@@ -37,3 +37,13 @@ class ProductFieldEnum(graphene.Enum):
     VARIANT_SKU = "variant sku"
     VARIANT_WEIGHT = "variant weight"
     VARIANT_MEDIA = "variant media"
+
+
+class ProductVariantChannelListFieldEnum(graphene.Enum):
+    FC_STORE_CODE = "fc_store_code"
+    FC_STORE_NAME = "fc_store_name"
+    ARTICLE_NUMBER = "article_number"
+    ARTICLE_NAME = "article_name"
+    PURCHASE_PRICE = "purchase_price"
+    SALE_PRICE = "sale_price"
+    STOCK_ON_HAND = "stock_on_hand"
