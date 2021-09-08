@@ -1,17 +1,15 @@
 from collections import defaultdict
 from typing import TYPE_CHECKING, Dict, List, Optional, Set, Union
 
+from django.db.models import OuterRef
 from django.db.models.aggregates import Sum
-from django.db.models.expressions import RawSQL, Subquery
+from django.db.models.expressions import Subquery
 from django.db.models.fields import IntegerField
 from django.db.models.functions import Coalesce
-from django.db.models import OuterRef, Exists
 
-from saleor.channel.models import Channel
-from saleor.csv.utils.product_variant_channel_list import \
-    ProductVariantChannelListExportFields
-from saleor.product.models import ProductVariantChannelListing
-from saleor.shipping.models import ShippingZone
+from saleor.csv.product_variant_channel_list import (
+    ProductVariantChannelListExportFields,
+)
 from saleor.warehouse.models import Allocation, Stock
 
 if TYPE_CHECKING:
@@ -19,11 +17,11 @@ if TYPE_CHECKING:
 
 
 def get_products_data(
-        queryset: "QuerySet",
-        export_fields: Set[str],
-        attribute_ids: Optional[List[int]],
-        warehouse_ids: Optional[List[int]],
-        channel_ids: Optional[List[int]],
+    queryset: "QuerySet",
+    export_fields: Set[str],
+    attribute_ids: Optional[List[int]],
+    warehouse_ids: Optional[List[int]],
+    channel_ids: Optional[List[int]],
 ) -> List[Dict[str, Union[str, bool]]]:
     """Create data list of products and their variants with fields values.
 
@@ -32,52 +30,90 @@ def get_products_data(
     """
 
     products_with_variants_data = []
+    obj_allocation = {}
 
     product_fields = set(
         ProductVariantChannelListExportFields.HEADERS_TO_FIELDS_MAPPING[
-            "fields"].values()
+            "fields"
+        ].values()
     )
 
     product_export_fields = export_fields & product_fields
     if not warehouse_ids:
-        product_export_fields.add("total_stock_all_warehouse")
-        raw_sql = """
-         (SELECT SUM(U0."quantity") AS "total_stock"
-         FROM "warehouse_stock" U0
-         WHERE U0."product_variant_id" = "product_productvariant"."id"
-         AND U0."warehouse_id" IN %s
-         GROUP BY U0."product_variant_id")
-        """
+        product_export_fields.add("total_stock_availability")
+        product_export_fields.remove("total_stock_allocated")
+        product_export_fields.add("variant_id")
+
+        stock_allocations = (
+            Allocation.objects.values("stock_id")
+            .filter(quantity_allocated__gt=0, stock_id=OuterRef("pk"))
+            .values_list(Sum("quantity_allocated"))
+        )
+        stock_allocated_subquery = Subquery(
+            queryset=stock_allocations, output_field=IntegerField()
+        )
+
+        allocations = Stock.objects.annotate(
+            stock_allocations=Coalesce(stock_allocated_subquery, 0)
+        ).values("product_variant_id", "stock_allocations")
+
+        for allocation in allocations:
+            obj_allocation[allocation["product_variant_id"]] = allocation[
+                "stock_allocations"
+            ]
+
+        warehouse_stock = (
+            Stock.objects.values("product_variant_id")
+            .filter(product_variant_id=OuterRef("variant"))
+            .values_list(Sum("quantity"))
+        )
+        warehouse_stock_subquery = Subquery(
+            queryset=warehouse_stock, output_field=IntegerField()
+        )
+
         products_data = (
             queryset.annotate(
-                total_stock_all_warehouse=RawSQL(
-                    sql=raw_sql, params=[get_warehouse_by_channels()]
-                )
+                total_stock_availability=Coalesce(warehouse_stock_subquery, 0),
             )
-                .order_by("pk", )
-                .values(*product_export_fields)
-                .distinct("pk", )
+            .order_by(
+                "pk",
+            )
+            .values(*product_export_fields)
+            .distinct(
+                "pk",
+            )
         )
-        return products_data
+        for product_data in products_data:
+            variant_id = product_data.pop("variant_id")
+            total_stock_allocated: Dict[int, str] = obj_allocation.get(variant_id, 0)
+            product_data["total_stock_availability"] = (
+                product_data["total_stock_availability"] - total_stock_allocated
+            )
+            product_data["total_stock_allocated"] = total_stock_allocated
+            products_with_variants_data.append(product_data)
+        return products_with_variants_data
 
     else:
         product_export_fields.add("variant__stocks__warehouse__id")
         products_data = (
-            queryset
-                .order_by("pk", "variant__stocks__warehouse__id")
-                .values(*product_export_fields)
-                .distinct("pk", "variant__stocks__warehouse__id")
+            queryset.order_by("pk", "variant__stocks__warehouse__id")
+            .values(*product_export_fields)
+            .distinct("pk", "variant__stocks__warehouse__id")
         )
 
         if warehouse_ids:
-            products_data = products_data.filter(variant__stocks__warehouse__id__in=warehouse_ids)
+            products_data = products_data.filter(
+                variant__stocks__warehouse__id__in=warehouse_ids
+            )
 
         variants_relations_data = get_variants_relations_data(
             queryset, export_fields, attribute_ids, warehouse_ids, channel_ids
         )
 
         for product_data in products_data:
-            variant__stocks__warehouse__id = product_data.pop("variant__stocks__warehouse__id")
+            variant__stocks__warehouse__id = product_data.pop(
+                "variant__stocks__warehouse__id"
+            )
             variant__sku = product_data.pop("variant__sku")
 
             variant_relations_data: Dict[str, str] = variants_relations_data.get(
@@ -88,28 +124,6 @@ def get_products_data(
 
             products_with_variants_data.append(data)
         return products_with_variants_data
-
-
-def get_warehouse_by_channels():
-
-    channels_slug = ProductVariantChannelListing.objects.\
-        values_list('channel__slug', flat=True).distinct()
-
-    ShippingZoneChannel = Channel.shipping_zones.through  # type: ignore
-    WarehouseShippingZone = ShippingZone.warehouses.through  # type: ignore
-    channels = Channel.objects.filter(slug__in=channels_slug).values("pk")
-    shipping_zone_channels = ShippingZoneChannel.objects.filter(
-        Exists(channels.filter(pk=OuterRef("channel_id")))
-    ).values("shippingzone_id")
-    warehouse_shipping_zones = WarehouseShippingZone.objects.filter(
-        Exists(
-            shipping_zone_channels.filter(
-                shippingzone_id=OuterRef("shippingzone_id")
-            )
-        )
-    ).values_list("warehouse_id", flat=True)
-
-    return tuple([str(ele) for ele in warehouse_shipping_zones])
 
 
 def get_variants_relations_data(
@@ -133,6 +147,7 @@ def get_variants_relations_data(
 
     return {}
 
+
 def prepare_variants_relations_data(
     queryset: "QuerySet",
     fields: Set[str],
@@ -152,13 +167,17 @@ def prepare_variants_relations_data(
     if warehouse_ids:
         fields.update(warehouse_fields.values())
 
-    relations_data = queryset.values(*fields).order_by('variant__stocks__warehouse__id')
+    relations_data = queryset.values(*fields).order_by("variant__stocks__warehouse__id")
 
     for data in relations_data.iterator():
         warehouse_id = data.get("variant__stocks__warehouse__id")
         variant_sku = data.get("variant__sku")
         result_data, data = handle_warehouse_data(
-            "{}{}".format(warehouse_id, variant_sku), data, warehouse_ids, result_data, warehouse_fields
+            "{}{}".format(warehouse_id, variant_sku),
+            data,
+            warehouse_ids,
+            result_data,
+            warehouse_fields,
         )
 
     result: Dict[int, Dict[str, str]] = {
@@ -210,5 +229,3 @@ def add_warehouse_info_to_data(
             result_data[pk][warehouse_qty_header] = warehouse_data["qty"]
 
     return result_data
-
-

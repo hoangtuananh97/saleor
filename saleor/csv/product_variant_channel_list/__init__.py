@@ -9,7 +9,8 @@ class ProductVariantChannelListExportFields:
             "article_name": "variant__product__name",
             "purchase_price": "cost_price_amount",
             "sale_price": "price_amount",
-            "stock_on_hand": "total_stock_all_warehouse",
+            "total_stock_availability": "total_stock_availability",
+            "total_stock_allocated": "total_stock_allocated",
         },
     }
 

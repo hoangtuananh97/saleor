@@ -46,4 +46,5 @@ class ProductVariantChannelListFieldEnum(graphene.Enum):
     ARTICLE_NAME = "article_name"
     PURCHASE_PRICE = "purchase_price"
     SALE_PRICE = "sale_price"
-    STOCK_ON_HAND = "stock_on_hand"
+    TOTAL_STOCK_AVAILABILITY = "total_stock_availability"
+    TOTAL_STOCK_ALLOCATED = "total_stock_allocated"

@@ -6,8 +6,9 @@ from django.db.models.functions import Concat
 
 from saleor.attribute.models import Attribute
 from saleor.channel.models import Channel
-from saleor.csv.utils.product_variant_channel_list import \
-    ProductVariantChannelListExportFields
+from saleor.csv.product_variant_channel_list import (
+    ProductVariantChannelListExportFields,
+)
 from saleor.warehouse.models import Warehouse
 
 
@@ -21,14 +22,10 @@ def get_export_fields_and_headers_info(
     Headers contains product, variant, attribute and warehouse headers.
     """
     export_fields, file_headers = get_product_export_fields_and_headers(export_info)
-    attributes_headers = get_attributes_headers(export_info)
     warehouses_headers = get_warehouses_headers(export_info)
-    channels_headers = get_channels_headers(export_info)
 
-    data_headers = (
-        export_fields + attributes_headers + warehouses_headers + channels_headers
-    )
-    file_headers += attributes_headers + warehouses_headers + channels_headers
+    data_headers = export_fields + warehouses_headers
+    file_headers += warehouses_headers
     return export_fields, file_headers, data_headers
 
 
@@ -57,11 +54,13 @@ def get_product_export_fields_and_headers(
     )
 
     for field in fields:
-        if warehouses_ids and field == 'stock_on_hand':
+        if warehouses_ids and (
+            field == "total_stock_availability" or field == "total_stock_allocated"
+        ):
             continue
         lookup_field = fields_mapping[field]
         export_fields.append(lookup_field)
-        file_headers.append(field.replace('_', ' ').title())
+        file_headers.append(field.replace("_", " ").title())
 
     return export_fields, file_headers
 
