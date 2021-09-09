@@ -1,5 +1,7 @@
-from ....product_variant_channel_list.product_variant_channel_list_headers import \
-    get_product_export_fields_and_headers, get_export_fields_and_headers_info
+from ....product_variant_channel_list.product_variant_channel_list_headers import (
+    get_export_fields_and_headers_info,
+    get_product_export_fields_and_headers,
+)
 
 
 def test_get_export_fields_and_headers_no_fields():
@@ -13,14 +15,14 @@ def test_get_export_fields_and_headers_info(warehouses):
     # given
     export_info = {
         "fields": [
-            "FC_STORE_CODE",
-            "FC_STORE_NAME",
-            "ARTICLE_NUMBER",
-            "ARTICLE_NAME",
-            "PURCHASE_PRICE",
-            "SALE_PRICE",
-            "TOTAL_STOCK_AVAILABILITY",
-            "TOTAL_STOCK_ALLOCATED"
+            "fc_store_code",
+            "fc_store_name",
+            "article_number",
+            "article_name",
+            "purchase_price",
+            "sale_price",
+            "stock_on_hand",
+            "stock_available",
         ],
     }
 
@@ -31,32 +33,26 @@ def test_get_export_fields_and_headers_info(warehouses):
         "Article Name",
         "Purchase Price",
         "Sale Price",
-        "Total Stock Availability",
-        "Total Stock Allocated",
+        "Stock On Hand",
+        "Stock Available",
     ]
 
     # when
     export_fields, file_headers, data_headers = get_export_fields_and_headers_info(
         export_info
     )
-
     # then
     expected_fields = [
-        "id",
-        "collections__slug",
-        "description_as_str",
+        "channel__slug",
+        "channel__name",
+        "variant__sku",
+        "variant__product__name",
+        "cost_price_amount",
+        "price_amount",
+        "stock_on_hand",
+        "stock_available",
     ]
-
-    warehouse_headers = [f"{w.slug} (warehouse quantity)" for w in warehouses]
-
-    excepted_headers = (
-            expected_fields
-            + warehouse_headers
-    )
-
-    expected_file_headers += (
-        warehouse_headers
-    )
+    excepted_headers = expected_fields
     assert expected_file_headers == file_headers
     assert set(export_fields) == set(expected_fields)
     assert data_headers == excepted_headers

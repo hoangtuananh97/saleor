@@ -1,5 +1,4 @@
-from collections import defaultdict
-from typing import TYPE_CHECKING, Dict, List, Optional, Set, Union
+from typing import TYPE_CHECKING, Dict, List, Set, Union
 
 from django.db.models import OuterRef
 from django.db.models.aggregates import Sum
@@ -16,21 +15,13 @@ if TYPE_CHECKING:
     from django.db.models import QuerySet
 
 
-def get_products_data(
+def get_products_variant_channel_list_data(
     queryset: "QuerySet",
     export_fields: Set[str],
-    attribute_ids: Optional[List[int]],
-    warehouse_ids: Optional[List[int]],
-    channel_ids: Optional[List[int]],
 ) -> List[Dict[str, Union[str, bool]]]:
-    """Create data list of products and their variants with fields values.
+    """Create data list of products variant channel list."""
 
-    It return list with product and variant data which can be used as import to
-    csv writer and list of attribute and warehouse headers.
-    """
-
-    products_with_variants_data = []
-    obj_allocation = {}
+    products_variant_channel_list_data = []
 
     product_fields = set(
         ProductVariantChannelListExportFields.HEADERS_TO_FIELDS_MAPPING[
@@ -39,193 +30,63 @@ def get_products_data(
     )
 
     product_export_fields = export_fields & product_fields
-    if not warehouse_ids:
-        product_export_fields.add("total_stock_availability")
-        product_export_fields.remove("total_stock_allocated")
-        product_export_fields.add("variant_id")
 
-        stock_allocations = (
-            Allocation.objects.values("stock_id")
-            .filter(quantity_allocated__gt=0, stock_id=OuterRef("pk"))
-            .values_list(Sum("quantity_allocated"))
+    product_export_fields.add("stock_on_hand")
+    product_export_fields.remove("stock_available")
+    product_export_fields.add("variant_id")
+
+    obj_allocation = get_total_quality_allocation()
+
+    stock_on_hand = (
+        Stock.objects.values("product_variant_id")
+        .filter(product_variant_id=OuterRef("variant"))
+        .values_list(Sum("quantity"))
+    )
+    stock_on_hand_subquery = Subquery(
+        queryset=stock_on_hand, output_field=IntegerField()
+    )
+
+    products_data = (
+        queryset.annotate(
+            stock_on_hand=Coalesce(stock_on_hand_subquery, 0),
         )
-        stock_allocated_subquery = Subquery(
-            queryset=stock_allocations, output_field=IntegerField()
+        .order_by(
+            "pk",
         )
-
-        allocations = Stock.objects.annotate(
-            stock_allocations=Coalesce(stock_allocated_subquery, 0)
-        ).values("product_variant_id", "stock_allocations")
-
-        for allocation in allocations:
-            obj_allocation[allocation["product_variant_id"]] = allocation[
-                "stock_allocations"
-            ]
-
-        warehouse_stock = (
-            Stock.objects.values("product_variant_id")
-            .filter(product_variant_id=OuterRef("variant"))
-            .values_list(Sum("quantity"))
+        .values(*product_export_fields)
+        .distinct(
+            "pk",
         )
-        warehouse_stock_subquery = Subquery(
-            queryset=warehouse_stock, output_field=IntegerField()
+    )
+    for product_data in products_data:
+        variant_id = product_data.pop("variant_id")
+        stock_allocation: Dict[int, str] = obj_allocation.get(variant_id, 0)
+        product_data["stock_available"] = (
+            product_data["stock_on_hand"] - stock_allocation
         )
-
-        products_data = (
-            queryset.annotate(
-                total_stock_availability=Coalesce(warehouse_stock_subquery, 0),
-            )
-            .order_by(
-                "pk",
-            )
-            .values(*product_export_fields)
-            .distinct(
-                "pk",
-            )
-        )
-        for product_data in products_data:
-            variant_id = product_data.pop("variant_id")
-            total_stock_allocated: Dict[int, str] = obj_allocation.get(variant_id, 0)
-            product_data["total_stock_availability"] = (
-                product_data["total_stock_availability"] - total_stock_allocated
-            )
-            product_data["total_stock_allocated"] = total_stock_allocated
-            products_with_variants_data.append(product_data)
-        return products_with_variants_data
-
-    else:
-        product_export_fields.add("variant__stocks__warehouse__id")
-        products_data = (
-            queryset.order_by("pk", "variant__stocks__warehouse__id")
-            .values(*product_export_fields)
-            .distinct("pk", "variant__stocks__warehouse__id")
-        )
-
-        if warehouse_ids:
-            products_data = products_data.filter(
-                variant__stocks__warehouse__id__in=warehouse_ids
-            )
-
-        variants_relations_data = get_variants_relations_data(
-            queryset, export_fields, attribute_ids, warehouse_ids, channel_ids
-        )
-
-        for product_data in products_data:
-            variant__stocks__warehouse__id = product_data.pop(
-                "variant__stocks__warehouse__id"
-            )
-            variant__sku = product_data.pop("variant__sku")
-
-            variant_relations_data: Dict[str, str] = variants_relations_data.get(
-                "{}{}".format(variant__stocks__warehouse__id, variant__sku), {}
-            )
-
-            data = {**product_data, **variant_relations_data}
-
-            products_with_variants_data.append(data)
-        return products_with_variants_data
+        products_variant_channel_list_data.append(product_data)
+    return products_variant_channel_list_data
 
 
-def get_variants_relations_data(
-    queryset: "QuerySet",
-    export_fields: Set[str],
-    attribute_ids: Optional[List[int]],
-    warehouse_ids: Optional[List[int]],
-    channel_ids: Optional[List[int]],
-) -> Dict[int, Dict[str, str]]:
-    """Get data about variants relations fields.
+def get_total_quality_allocation():
+    # Get total quality allocate by product variant id
+    obj_allocation = {}
+    stock_allocations = (
+        Allocation.objects.values("stock_id")
+        .filter(quantity_allocated__gt=0, stock_id=OuterRef("pk"))
+        .values_list(Sum("quantity_allocated"))
+    )
+    stock_allocated_subquery = Subquery(
+        queryset=stock_allocations, output_field=IntegerField()
+    )
 
-    If any many to many fields are in export_fields or some attribute_ids or
-    warehouse_ids exists then dict with variant relations fields is returned.
-    Otherwise it returns empty dict.
-    """
-    relations_fields = export_fields
-    if relations_fields or attribute_ids or warehouse_ids or channel_ids:
-        return prepare_variants_relations_data(
-            queryset, relations_fields, attribute_ids, warehouse_ids, channel_ids
-        )
+    stock_allocations = Stock.objects.annotate(
+        quantity_allocated=Coalesce(stock_allocated_subquery, 0)
+    ).values("product_variant_id", "quantity_allocated")
 
-    return {}
+    for stock_allocation in stock_allocations:
+        item_id = stock_allocation["product_variant_id"]
+        item_quantity = stock_allocation["quantity_allocated"]
+        obj_allocation[item_id] = obj_allocation.get(item_id, 0) + item_quantity
 
-
-def prepare_variants_relations_data(
-    queryset: "QuerySet",
-    fields: Set[str],
-    attribute_ids: Optional[List[int]],
-    warehouse_ids: Optional[List[int]],
-    channel_ids: Optional[List[int]],
-) -> Dict[int, Dict[str, str]]:
-    """Prepare data about variants relation fields for given queryset.
-
-    It return dict where key is a product pk, value is a dict with relation fields data.
-    """
-    warehouse_fields = ProductVariantChannelListExportFields.WAREHOUSE_FIELDS
-
-    result_data: Dict[str, dict] = defaultdict(dict)
-    fields.add("variant__stocks__warehouse__id")
-
-    if warehouse_ids:
-        fields.update(warehouse_fields.values())
-
-    relations_data = queryset.values(*fields).order_by("variant__stocks__warehouse__id")
-
-    for data in relations_data.iterator():
-        warehouse_id = data.get("variant__stocks__warehouse__id")
-        variant_sku = data.get("variant__sku")
-        result_data, data = handle_warehouse_data(
-            "{}{}".format(warehouse_id, variant_sku),
-            data,
-            warehouse_ids,
-            result_data,
-            warehouse_fields,
-        )
-
-    result: Dict[int, Dict[str, str]] = {
-        pk: {
-            header: ", ".join(sorted(values)) if isinstance(values, set) else values
-            for header, values in data.items()
-        }
-        for pk, data in result_data.items()
-    }
-    return result
-
-
-def handle_warehouse_data(
-    pk: str,
-    data: dict,
-    warehouse_ids: Optional[List[int]],
-    result_data: Dict[str, dict],
-    warehouse_fields: dict,
-):
-    warehouse_data: dict = {}
-
-    warehouse_pk = str(data.pop(warehouse_fields["warehouse_pk"], ""))
-    warehouse_data = {
-        "slug": data.pop(warehouse_fields["slug"], None),
-        "qty": data.pop(warehouse_fields["quantity"], None),
-    }
-
-    if warehouse_ids and warehouse_pk in warehouse_ids:
-        result_data = add_warehouse_info_to_data(pk, warehouse_data, result_data)
-
-    return result_data, data
-
-
-def add_warehouse_info_to_data(
-    pk: str,
-    warehouse_data: Dict[str, Union[Optional[str]]],
-    result_data: Dict[str, dict],
-) -> Dict[str, dict]:
-    """Add info about stock quantity to variant data.
-
-    This functions adds info about stock quantity to dict with variant data.
-    It returns updated data.
-    """
-
-    slug = warehouse_data["slug"]
-    if slug:
-        warehouse_qty_header = f"{slug} (warehouse quantity)"
-        if warehouse_qty_header not in result_data[pk]:
-            result_data[pk][warehouse_qty_header] = warehouse_data["qty"]
-
-    return result_data
+    return obj_allocation

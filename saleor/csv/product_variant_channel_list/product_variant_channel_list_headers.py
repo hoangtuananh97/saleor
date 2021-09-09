@@ -22,10 +22,8 @@ def get_export_fields_and_headers_info(
     Headers contains product, variant, attribute and warehouse headers.
     """
     export_fields, file_headers = get_product_export_fields_and_headers(export_info)
-    warehouses_headers = get_warehouses_headers(export_info)
 
-    data_headers = export_fields + warehouses_headers
-    file_headers += warehouses_headers
+    data_headers = export_fields
     return export_fields, file_headers, data_headers
 
 
@@ -37,11 +35,10 @@ def get_product_export_fields_and_headers(
     Based on given fields headers from export info, export fields set and
     headers mapping is prepared.
     """
-    export_fields = []
-    file_headers = []
+    export_fields = []  # type: List[str]
+    file_headers = []  # type: List[str]
 
     fields = export_info.get("fields")
-    warehouses_ids = export_info.get("warehouses")
     if not fields:
         return export_fields, file_headers
 
@@ -52,12 +49,7 @@ def get_product_export_fields_and_headers(
             )  # type: ignore
         )
     )
-
     for field in fields:
-        if warehouses_ids and (
-            field == "total_stock_availability" or field == "total_stock_allocated"
-        ):
-            continue
         lookup_field = fields_mapping[field]
         export_fields.append(lookup_field)
         file_headers.append(field.replace("_", " ").title())
