@@ -159,6 +159,10 @@ class OrderUpdateInput(graphene.InputObjectType):
     billing_address = AddressInput(description="Billing address of the customer.")
     user_email = graphene.String(description="Email address of the customer.")
     shipping_address = AddressInput(description="Shipping address of the customer.")
+    order_number = graphene.String(description="Order number of the order")
+    request_delivery_date = graphene.Date(
+        description="Request delivery date of the order"
+    )
 
 
 class OrderUpdate(DraftOrderCreate):
@@ -180,7 +184,13 @@ class OrderUpdate(DraftOrderCreate):
         draft_order_cleaned_input = super().clean_input(info, instance, data)
 
         # We must to filter out field added by DraftOrderUpdate
-        editable_fields = ["billing_address", "shipping_address", "user_email"]
+        editable_fields = [
+            "billing_address",
+            "shipping_address",
+            "user_email",
+            "order_number",
+            "request_delivery_date",
+        ]
         cleaned_input = {}
         for key in draft_order_cleaned_input:
             if key in editable_fields:

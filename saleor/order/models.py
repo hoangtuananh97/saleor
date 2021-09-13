@@ -248,6 +248,9 @@ class Order(ModelWithMetadata):
     )
     redirect_url = models.URLField(blank=True, null=True)
 
+    order_number = models.CharField(max_length=255, blank=True, null=True)
+    request_delivery_date = models.DateField(blank=True, null=True)
+
     objects = models.Manager.from_queryset(OrderQueryset)()
 
     class Meta:

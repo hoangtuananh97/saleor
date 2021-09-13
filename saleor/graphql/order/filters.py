@@ -129,6 +129,10 @@ class OrderFilter(DraftOrderFilter):
     created = ObjectTypeFilter(input_class=DateRangeInput, method=filter_created_range)
     search = django_filters.CharFilter(method=filter_order_search)
     channels = GlobalIDMultipleChoiceFilter(method=filter_channels)
+    order_number = django_filters.CharFilter()
+    request_delivery_date = ObjectTypeFilter(
+        input_class=DateRangeInput, method=filter_range_field
+    )
 
     class Meta:
         model = Order

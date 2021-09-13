@@ -10,6 +10,7 @@ import pytest
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ValidationError
 from django.db.models import Sum
+from django.utils import timezone
 from freezegun import freeze_time
 from measurement.measures import Weight
 from prices import Money, TaxedMoney
@@ -6905,3 +6906,81 @@ def test_order_shipping_update_mutation_properly_recalculate_total(
     content = get_graphql_content(response)
     data = content["data"]["orderUpdateShipping"]
     assert data["order"]["shippingMethod"] is None
+
+
+ORDER_UPDATE_MUTATION = """
+    mutation (
+        $ids: ID!,
+        $input: OrderUpdateInput!
+    ){
+        orderUpdate(
+            ids: $ids,
+            input: $input
+        ){
+            errors {
+                field
+                code
+            }
+            order {
+                userEmail
+            }
+        }
+    }
+"""
+
+
+def test_order_query_with_filter_request_delivery_date(
+    orders_query_with_filter,
+    staff_api_client,
+    permission_manage_orders,
+    orders,
+    channel_USD,
+):
+    # given
+    future = timezone.now().date()
+    orders[0].request_delivery_date = future
+    orders[0].save()
+
+    variables = {
+        "filter": {
+            "requestDeliveryDate": {
+                "gte": (future - timezone.timedelta(days=1)).isoformat(),
+                "lte": (future + timezone.timedelta(days=1)).isoformat(),
+            }
+        }
+    }
+
+    # when
+    response = staff_api_client.post_graphql(
+        orders_query_with_filter, variables, permissions=(permission_manage_orders,)
+    )
+
+    # then
+    content = get_graphql_content(response)
+    orders = content["data"]["orders"]["edges"]
+    assert orders[0]["node"]["requestDeliveryDate"] == future.isoformat()
+
+
+def test_order_query_with_filter_order_number(
+    orders_query_with_filter,
+    staff_api_client,
+    permission_manage_orders,
+    orders,
+    channel_USD,
+):
+    # given
+    order_number = "Xym42bvmgisb6AvgM=="
+    orders[0].order_number = order_number
+    orders[0].save()
+
+    variables = {"filter": {"orderNumber": order_number}}
+
+    # when
+    response = staff_api_client.post_graphql(
+        orders_query_with_filter, variables, permissions=(permission_manage_orders,)
+    )
+
+    # then
+    content = get_graphql_content(response)
+    orders = content["data"]["orders"]["edges"]
+    assert orders[0]["node"]["orderNumber"] == order_number
