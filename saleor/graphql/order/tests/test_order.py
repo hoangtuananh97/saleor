@@ -6908,27 +6908,6 @@ def test_order_shipping_update_mutation_properly_recalculate_total(
     assert data["order"]["shippingMethod"] is None
 
 
-ORDER_UPDATE_MUTATION = """
-    mutation (
-        $ids: ID!,
-        $input: OrderUpdateInput!
-    ){
-        orderUpdate(
-            ids: $ids,
-            input: $input
-        ){
-            errors {
-                field
-                code
-            }
-            order {
-                userEmail
-            }
-        }
-    }
-"""
-
-
 def test_order_query_with_filter_request_delivery_date(
     orders_query_with_filter,
     staff_api_client,
