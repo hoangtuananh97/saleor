@@ -134,3 +134,4 @@ TranslationErrorCode = graphene.Enum.from_enum(core_error_codes.TranslationError
 CategoryCustomErrorCode = graphene.Enum.from_enum(
     custom_error_codes.CategoryCustomErrorCode
 )
+StaffEventErrorCode = graphene.Enum.from_enum(account_error_codes.StaffEventErrorCode)

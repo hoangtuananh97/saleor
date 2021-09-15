@@ -24,7 +24,7 @@ from django_countries import countries
 from PIL import Image
 from prices import Money, TaxedMoney, fixed_discount
 
-from ..account.models import Address, StaffNotificationRecipient, User
+from ..account.models import Address, StaffEvent, StaffNotificationRecipient, User
 from ..app.models import App, AppExtension, AppInstallation
 from ..app.types import AppExtensionTarget, AppExtensionType, AppExtensionView, AppType
 from ..attribute import AttributeEntityType, AttributeInputType, AttributeType
@@ -4679,3 +4679,38 @@ def app_manifest():
         "configurationUrl": "http://127.0.0.1:5000/configuration/",
         "tokenTargetUrl": "http://127.0.0.1:5000/configuration/install",
     }
+
+
+@pytest.fixture
+def permission_manage_staff_event():
+    return Permission.objects.get(codename="manage_staff_event")
+
+
+@pytest.fixture
+def staff_event(db):
+    return StaffEvent.objects.create(
+        title="title",
+        content="content",
+        user_id=1,
+        created_at="2021-09-15 12:12:12",
+    )
+
+
+@pytest.fixture
+def staff_events(db):
+    checkouts_usd = StaffEvent.objects.bulk_create(
+        [
+            StaffEvent(
+                title="title",
+                content="content",
+                user_id=1,
+                created_at="2021-09-15 12:12:12",
+            ),
+            StaffEvent(
+                title="title2",
+                content="content2",
+                user_id=1,
+                created_at="2021-09-17 12:12:12",
+            ),
+        ]
+    )

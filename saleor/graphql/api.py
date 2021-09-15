@@ -1,6 +1,6 @@
 from graphene_federation import build_schema
 
-from .account.schema import AccountMutations, AccountQueries
+from .account.schema import AccountMutations, AccountQueries, StaffEventQueries
 from .app.schema import AppMutations, AppQueries
 from .attribute.schema import AttributeMutations, AttributeQueries
 from .channel.schema import ChannelMutations, ChannelQueries
@@ -49,6 +49,7 @@ class Query(
     WarehouseQueries,
     WebhookQueries,
     CategoryCustomQueries,
+    StaffEventQueries,
 ):
     pass
 

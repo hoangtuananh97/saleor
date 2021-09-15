@@ -32,6 +32,7 @@ from ..enums import (
     ProductErrorCode,
     ShippingErrorCode,
     ShopErrorCode,
+    StaffEventErrorCode,
     StockErrorCode,
     TimePeriodTypeEnum,
     TranslationErrorCode,
@@ -464,3 +465,7 @@ class CategoryCustomError(Error):
         description="List of attribute values IDs which causes the error.",
         required=False,
     )
+
+
+class StaffEventError(Error):
+    code = StaffEventErrorCode(description="The error code.", required=True)

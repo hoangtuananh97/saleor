@@ -5,9 +5,10 @@ from django.core.exceptions import ValidationError
 
 from ...account import models
 from ...account.error_codes import AccountErrorCode
-from ...core.permissions import AccountPermissions
+from ...core.permissions import AccountPermissions, StaffEventPermissions
 from ..core.mutations import BaseBulkMutation, ModelBulkDeleteMutation
-from ..core.types.common import AccountError, StaffError
+from ..core.types.common import AccountError, StaffError, StaffEventError
+from .mutations.staff_event import check_staff_event_permission_mutation
 from .types import User
 from .utils import CustomerDeleteMixin, StaffDeleteMixin
 
@@ -110,3 +111,47 @@ class UserBulkSetActive(BaseBulkMutation):
     @classmethod
     def bulk_action(cls, info, queryset, is_active):
         queryset.update(is_active=is_active)
+
+
+class StaffEventBulkActions(BaseBulkMutation):
+    class Arguments:
+        ids = graphene.List(
+            graphene.ID, required=True, description="List of staff event IDs."
+        )
+
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def clean_instance(cls, info, instance):
+        return check_staff_event_permission_mutation(info.context.user, instance)
+
+    @classmethod
+    def bulk_action(cls, info, queryset):
+        raise NotImplementedError
+
+
+class StaffEventBulkUpdate(StaffEventBulkActions):
+    class Meta:
+        description = "Update seen for staff event."
+        model = models.StaffEvent
+        permissions = (StaffEventPermissions.MANAGE_STAFF_EVENT,)
+        error_type_class = StaffEventError
+        error_type_field = "staff_event_errors"
+
+    @classmethod
+    def bulk_action(cls, info, queryset):
+        queryset.update(is_seen=True)
+
+
+class StaffEventBulkDelete(BaseBulkMutation):
+    class Meta:
+        description = "Delete staff event."
+        model = models.StaffEvent
+        permissions = (StaffEventPermissions.MANAGE_STAFF_EVENT,)
+        error_type_class = StaffEventError
+        error_type_field = "staff_event_errors"
+
+    @classmethod
+    def bulk_action(cls, info, queryset):
+        queryset.delete()

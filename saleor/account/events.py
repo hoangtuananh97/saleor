@@ -4,7 +4,7 @@ from ..app.models import App
 from ..core.utils.validators import user_is_valid
 from ..order.models import Order, OrderLine
 from . import CustomerEvents
-from .models import CustomerEvent, User
+from .models import CustomerEvent, StaffEvent, User
 
 UserType = Optional[User]
 AppType = Optional[App]
@@ -116,4 +116,12 @@ def assigned_name_to_a_customer_event(
         order=None,
         type=CustomerEvents.NAME_ASSIGNED,
         parameters={"message": new_name},
+    )
+
+
+def staff_event_create(*, staff_user: int, title: str, content: str) -> StaffEvent:
+    return StaffEvent.objects.create(
+        user_id=staff_user,
+        title=title,
+        content=content,
     )

@@ -5,6 +5,7 @@ from django.contrib.auth import models as auth_models
 from i18naddress import get_validation_rules
 
 from ...account import models
+from ...account.models import StaffEvent
 from ...core.exceptions import PermissionDenied
 from ...core.permissions import AccountPermissions
 from ...core.tracing import traced_resolver
@@ -167,3 +168,10 @@ def resolve_permissions(root: models.User):
     permissions = get_user_permissions(root)
     permissions = permissions.order_by("codename")
     return format_permissions_for_display(permissions)
+
+
+def resolve_staff_events(user_id):
+    data = StaffEvent.objects.all()
+    if user_id:
+        data = data.filter(user_id=user_id)
+    return data

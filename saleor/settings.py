@@ -534,6 +534,7 @@ BUILTIN_PLUGINS = [
     "saleor.plugins.user_email.plugin.UserEmailPlugin",
     "saleor.plugins.admin_email.plugin.AdminEmailPlugin",
     "saleor.plugins.sendgrid.plugin.SendgridEmailPlugin",
+    "saleor.plugins.staff_event.plugin.StaffEventPlugin",
 ]
 
 # Plugin discovery

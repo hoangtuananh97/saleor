@@ -45,3 +45,7 @@ class PermissionGroupErrorCode(Enum):
     OUT_OF_SCOPE_USER = "out_of_scope_user"
     REQUIRED = "required"
     UNIQUE = "unique"
+
+
+class StaffEventErrorCode(Enum):
+    NO_PERMISSION = "no_permission_mutation"

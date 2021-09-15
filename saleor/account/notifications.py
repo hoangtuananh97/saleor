@@ -144,3 +144,21 @@ def send_set_password_notification(
     else:
         event = NotifyEventType.ACCOUNT_SET_CUSTOMER_PASSWORD
     manager.notify(event, payload=payload, channel_slug=channel_slug)
+
+
+def send_staff_event_notification(
+    user,
+    manager,
+    title: str,
+    content: str,
+):
+    payload = {
+        "staff_user": user.id,
+        "staff_user_email": user.email,
+        "title": title,
+        "content": content,
+        **get_site_context(),
+    }
+
+    event = NotifyEventType.STAFF_EVENT
+    manager.notify(event, payload=payload)

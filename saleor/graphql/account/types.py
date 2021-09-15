@@ -477,3 +477,31 @@ class Group(CountableDjangoObjectType):
     def resolve_user_can_manage(root: auth_models.Group, info):
         user = info.context.user
         return can_user_manage_group(user, root)
+
+
+@key(fields="id")
+class StaffEvent(CountableDjangoObjectType):
+    title = graphene.String(
+        description=("Returns title of a staff event to email notifications."),
+        required=False,
+    )
+
+    content = graphene.String(
+        description=("Returns content of a staff event to email notifications."),
+        required=False,
+    )
+    date = graphene.DateTime(
+        description=("Returns time of a staff event to email notifications."),
+        required=False,
+    )
+    is_seen = graphene.Boolean(
+        description=("Returns seen of a staff event to email notifications."),
+        required=False,
+    )
+    user = graphene.Field(User, description="List of group users")
+
+    class Meta:
+        description = "History notify of the staff event."
+        model = models.StaffEvent
+        interfaces = [relay.Node]
+        only_fields = ["id"]

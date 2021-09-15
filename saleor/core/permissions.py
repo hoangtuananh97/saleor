@@ -76,6 +76,10 @@ class SitePermissions(BasePermissionEnum):
     MANAGE_TRANSLATIONS = "site.manage_translations"
 
 
+class StaffEventPermissions(BasePermissionEnum):
+    MANAGE_STAFF_EVENT = "staff_event.manage_staff_event"
+
+
 PERMISSIONS_ENUMS = [
     AccountPermissions,
     AppPermission,
@@ -93,6 +97,7 @@ PERMISSIONS_ENUMS = [
     ShippingPermissions,
     SitePermissions,
     CheckoutPermissions,
+    StaffEventPermissions,
 ]
 
 

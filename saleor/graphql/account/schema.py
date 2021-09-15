@@ -1,12 +1,18 @@
 import graphene
 
 from ...core.permissions import AccountPermissions
-from ..core.fields import FilterInputConnectionField
+from ..core.fields import FilterInputConnectionField, PrefetchingConnectionField
 from ..core.types import FilterInputObjectType
 from ..core.utils import from_global_id_or_error
 from ..core.validators import validate_one_of_args_is_in_query
 from ..decorators import one_of_permissions_required, permission_required
-from .bulk_mutations import CustomerBulkDelete, StaffBulkDelete, UserBulkSetActive
+from .bulk_mutations import (
+    CustomerBulkDelete,
+    StaffBulkDelete,
+    StaffEventBulkDelete,
+    StaffEventBulkUpdate,
+    UserBulkSetActive,
+)
 from .enums import CountryCodeEnum
 from .filters import CustomerFilter, PermissionGroupFilter, StaffUserFilter
 from .mutations.account import (
@@ -57,17 +63,19 @@ from .mutations.staff import (
     UserAvatarDelete,
     UserAvatarUpdate,
 )
+from .mutations.staff_event import StaffEventDelete, StaffEventUpdate
 from .resolvers import (
     resolve_address,
     resolve_address_validation_rules,
     resolve_customers,
     resolve_permission_group,
     resolve_permission_groups,
+    resolve_staff_events,
     resolve_staff_users,
     resolve_user,
 )
 from .sorters import PermissionGroupSortingInput, UserSortingInput
-from .types import Address, AddressValidationData, Group, User
+from .types import Address, AddressValidationData, Group, StaffEvent, User
 
 
 class CustomerFilterInput(FilterInputObjectType):
@@ -189,6 +197,17 @@ class AccountQueries(graphene.ObjectType):
         return resolve_address(info, id)
 
 
+class StaffEventQueries(graphene.ObjectType):
+    staff_events = PrefetchingConnectionField(
+        StaffEvent,
+        description="List history staff event notify.",
+    )
+
+    def resolve_staff_events(self, info, **kwargs):
+        user_id = info.context.user.id
+        return resolve_staff_events(user_id)
+
+
 class AccountMutations(graphene.ObjectType):
     # Base mutations
     token_create = CreateToken.Field()
@@ -245,3 +264,9 @@ class AccountMutations(graphene.ObjectType):
     permission_group_create = PermissionGroupCreate.Field()
     permission_group_update = PermissionGroupUpdate.Field()
     permission_group_delete = PermissionGroupDelete.Field()
+
+    # Staff event mutations
+    staff_event_update = StaffEventUpdate.Field()
+    staff_event_delete = StaffEventDelete.Field()
+    staff_event_bulk_update = StaffEventBulkUpdate.Field()
+    staff_event_bulk_delete = StaffEventBulkDelete.Field()

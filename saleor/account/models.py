@@ -23,7 +23,12 @@ from versatileimagefield.fields import VersatileImageField
 
 from ..app.models import App
 from ..core.models import ModelWithMetadata
-from ..core.permissions import AccountPermissions, BasePermissionEnum, get_permissions
+from ..core.permissions import (
+    AccountPermissions,
+    BasePermissionEnum,
+    StaffEventPermissions,
+    get_permissions,
+)
 from ..core.utils.json_serializer import CustomJsonEncoder
 from ..order.models import Order
 from . import CustomerEvents
@@ -318,3 +323,21 @@ class StaffNotificationRecipient(models.Model):
 
     def get_email(self):
         return self.user.email if self.user else self.staff_email
+
+
+class StaffEvent(models.Model):
+    """Model used to store events that happened during the staff lifecycle."""
+
+    user = models.ForeignKey(
+        User, related_name="staff_events", on_delete=models.CASCADE, null=True
+    )
+    content = models.TextField(blank=True)
+    title = models.CharField(max_length=255, blank=True)
+    is_seen = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+
+    class Meta:
+        ordering = ("created_at",)
+        permissions = (
+            (StaffEventPermissions.MANAGE_STAFF_EVENT.codename, "Manage staff event."),
+        )

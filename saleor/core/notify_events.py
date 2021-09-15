@@ -56,7 +56,20 @@ class CategoryNotifyEvent:
     ]
 
 
-class NotifyEventType(UserNotifyEvent, AdminNotifyEvent, CategoryNotifyEvent):
+class StaffEventNotifyEvent:
+    STAFF_EVENT = "staff_event"
+
+    CHOICES = [
+        STAFF_EVENT,
+    ]
+
+
+class NotifyEventType(
+    UserNotifyEvent, AdminNotifyEvent, CategoryNotifyEvent, StaffEventNotifyEvent
+):
     CHOICES = (
-        UserNotifyEvent.CHOICES + AdminNotifyEvent.CHOICES + CategoryNotifyEvent.CHOICES
+        UserNotifyEvent.CHOICES
+        + AdminNotifyEvent.CHOICES
+        + CategoryNotifyEvent.CHOICES
+        + StaffEventNotifyEvent.CHOICES
     )
