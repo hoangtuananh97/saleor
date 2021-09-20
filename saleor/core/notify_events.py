@@ -38,6 +38,7 @@ class AdminNotifyEvent:
     CSV_PRODUCT_EXPORT_SUCCESS = "csv_export_products_success"
     CSV_EXPORT_FAILED = "csv_export_failed"
     STAFF_ORDER_CONFIRMATION = "staff_order_confirmation"
+    STAFF_EVENT = "staff_event"
 
     CHOICES = [
         ACCOUNT_SET_STAFF_PASSWORD,
@@ -45,6 +46,7 @@ class AdminNotifyEvent:
         CSV_EXPORT_FAILED,
         STAFF_ORDER_CONFIRMATION,
         ACCOUNT_STAFF_RESET_PASSWORD,
+        STAFF_EVENT,
     ]
 
 
@@ -56,20 +58,7 @@ class CategoryNotifyEvent:
     ]
 
 
-class StaffEventNotifyEvent:
-    STAFF_EVENT = "staff_event"
-
-    CHOICES = [
-        STAFF_EVENT,
-    ]
-
-
-class NotifyEventType(
-    UserNotifyEvent, AdminNotifyEvent, CategoryNotifyEvent, StaffEventNotifyEvent
-):
+class NotifyEventType(UserNotifyEvent, AdminNotifyEvent, CategoryNotifyEvent):
     CHOICES = (
-        UserNotifyEvent.CHOICES
-        + AdminNotifyEvent.CHOICES
-        + CategoryNotifyEvent.CHOICES
-        + StaffEventNotifyEvent.CHOICES
+        UserNotifyEvent.CHOICES + AdminNotifyEvent.CHOICES + CategoryNotifyEvent.CHOICES
     )

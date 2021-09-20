@@ -22,6 +22,7 @@ from .notify_events import (
     send_csv_export_failed,
     send_csv_product_export_success,
     send_set_staff_password_email,
+    send_staff_event_notify,
     send_staff_order_confirmation,
     send_staff_reset_password,
 )
@@ -36,6 +37,7 @@ class AdminTemplate:
     csv_product_export_success: Optional[str]
     csv_export_failed: Optional[str]
     staff_reset_password: Optional[str]
+    staff_event: Optional[str]
 
 
 def get_admin_template_map(templates: AdminTemplate):
@@ -49,6 +51,7 @@ def get_admin_template_map(templates: AdminTemplate):
         AdminNotifyEvent.ACCOUNT_STAFF_RESET_PASSWORD: (
             templates.set_staff_password_email
         ),
+        AdminNotifyEvent.STAFF_EVENT: templates.staff_event,
     }
 
 
@@ -59,6 +62,7 @@ def get_admin_event_map():
         AdminNotifyEvent.ACCOUNT_STAFF_RESET_PASSWORD: send_staff_reset_password,
         AdminNotifyEvent.CSV_PRODUCT_EXPORT_SUCCESS: send_csv_product_export_success,
         AdminNotifyEvent.CSV_EXPORT_FAILED: send_csv_export_failed,
+        AdminNotifyEvent.STAFF_EVENT: send_staff_event_notify,
     }
 
 
@@ -68,6 +72,7 @@ class AdminEmailPlugin(BasePlugin):
     PLUGIN_DESCRIPTION = "Plugin responsible for sending the staff emails."
     DEFAULT_ACTIVE = True
     CONFIGURATION_PER_CHANNEL = False
+    SEND_EMAIL_NOTIFY = True
 
     DEFAULT_CONFIGURATION = [
         {
@@ -109,6 +114,14 @@ class AdminEmailPlugin(BasePlugin):
         {
             "name": constants.CSV_EXPORT_FAILED_TEMPLATE_FIELD,
             "value": DEFAULT_EMAIL_VALUE,
+        },
+        {
+            "name": constants.SET_STAFF_EVENT_TEMPLATE_FIELD,
+            "value": DEFAULT_EMAIL_VALUE,
+        },
+        {
+            "name": constants.SET_STAFF_EVENT_SUBJECT_FIELD,
+            "value": constants.SET_STAFF_EVENT_DEFAULT_SUBJECT,
         },
     ] + DEFAULT_EMAIL_CONFIGURATION  # type: ignore
 
@@ -163,6 +176,16 @@ class AdminEmailPlugin(BasePlugin):
             "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
             "label": "CSV export failed template",
         },
+        constants.SET_STAFF_EVENT_SUBJECT_FIELD: {
+            "type": ConfigurationTypeField.STRING,
+            "help_text": DEFAULT_SUBJECT_HELP_TEXT,
+            "label": "Staff Event subject",
+        },
+        constants.SET_STAFF_EVENT_TEMPLATE_FIELD: {
+            "type": ConfigurationTypeField.MULTILINE,
+            "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
+            "label": "Staff Event template",
+        },
     }
     CONFIG_STRUCTURE.update(DEFAULT_EMAIL_CONFIG_STRUCTURE)
     CONFIG_STRUCTURE["host"][
@@ -215,6 +238,7 @@ class AdminEmailPlugin(BasePlugin):
             staff_reset_password=configuration[
                 constants.STAFF_PASSWORD_RESET_TEMPLATE_FIELD
             ],
+            staff_event=configuration[constants.SET_STAFF_EVENT_TEMPLATE_FIELD],
         )
 
     def notify(self, event: NotifyEventType, payload: dict, previous_value):
@@ -229,6 +253,8 @@ class AdminEmailPlugin(BasePlugin):
         template_map = get_admin_template_map(self.templates)
         if not template_map.get(event):
             return previous_value
+
+        payload["send_mail_notify"] = self.SEND_EMAIL_NOTIFY
         event_map[event](
             payload,
             asdict(self.config),  # type: ignore

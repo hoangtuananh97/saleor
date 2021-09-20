@@ -285,10 +285,12 @@ def send_order_confirmation(order, redirect_url, manager):
     recipient_emails = [
         notification.get_email() for notification in staff_notifications
     ]
+    user_ids = [notification.user_id for notification in staff_notifications]
     if recipient_emails:
         payload = {
             "order": payload["order"],
             "recipient_list": recipient_emails,
+            "recipient_id_list": user_ids,
             **get_site_context(),
         }
         manager.notify(NotifyEventType.STAFF_ORDER_CONFIRMATION, payload=payload)

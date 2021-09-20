@@ -10,7 +10,7 @@ from ....account.error_codes import StaffEventErrorCode
 from ..types import StaffEvent
 
 
-class StaffEventUpdate(BaseMutation):
+class StaffEventMarkRead(BaseMutation):
 
     staff_event = graphene.Field(StaffEvent, description="Staff Event updated")
 
@@ -35,7 +35,7 @@ class StaffEventUpdate(BaseMutation):
         staff_event.is_seen = True
         staff_event.save()
 
-        return StaffEventUpdate(staff_event=staff_event)
+        return StaffEventMarkRead(staff_event=staff_event)
 
 
 class StaffEventDelete(BaseMutation):
@@ -62,7 +62,7 @@ class StaffEventDelete(BaseMutation):
         check_staff_event_permission_mutation(user, staff_event)
         staff_event.delete()
 
-        return StaffEventUpdate(message="Delete Success")
+        return StaffEventDelete(message="Delete Success")
 
 
 def check_staff_event_permission_mutation(user, staff_event):

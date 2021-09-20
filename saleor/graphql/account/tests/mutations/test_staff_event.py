@@ -5,8 +5,8 @@ from saleor.account.models import StaffEvent
 from saleor.graphql.tests.utils import assert_no_permission, get_graphql_content
 
 STAFF_EVENT_UPDATE = """
-mutation StaffEventUpdate($staffEventId: ID!){
-    staffEventUpdate(staffEventId: $staffEventId){
+mutation StaffEventMarkRead($staffEventId: ID!){
+    StaffEventMarkRead(staffEventId: $staffEventId){
         message
         errors{
             code
@@ -34,7 +34,7 @@ def test_staff_event_update(
 
     # then
     content = get_graphql_content(response)
-    staff_event = content["data"]["staffEventUpdate"]["staff_event"]
+    staff_event = content["data"]["StaffEventMarkRead"]["staff_event"]
     assert staff_event["is_seen"] == is_seen_expect
 
 

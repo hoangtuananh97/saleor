@@ -63,7 +63,7 @@ from .mutations.staff import (
     UserAvatarDelete,
     UserAvatarUpdate,
 )
-from .mutations.staff_event import StaffEventDelete, StaffEventUpdate
+from .mutations.staff_event import StaffEventDelete, StaffEventMarkRead
 from .resolvers import (
     resolve_address,
     resolve_address_validation_rules,
@@ -266,7 +266,7 @@ class AccountMutations(graphene.ObjectType):
     permission_group_delete = PermissionGroupDelete.Field()
 
     # Staff event mutations
-    staff_event_update = StaffEventUpdate.Field()
+    staff_event_update = StaffEventMarkRead.Field()
     staff_event_delete = StaffEventDelete.Field()
     staff_event_bulk_update = StaffEventBulkUpdate.Field()
     staff_event_bulk_delete = StaffEventBulkDelete.Field()

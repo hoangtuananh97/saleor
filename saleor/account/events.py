@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 from ..app.models import App
 from ..core.utils.validators import user_is_valid
@@ -119,9 +119,16 @@ def assigned_name_to_a_customer_event(
     )
 
 
-def staff_event_create(*, staff_user: int, title: str, content: str) -> StaffEvent:
-    return StaffEvent.objects.create(
-        user_id=staff_user,
-        title=title,
-        content=content,
+def staff_event_create(
+    *, staff_users: List, title: str, content: str
+) -> List[StaffEvent]:
+    return StaffEvent.objects.bulk_create(
+        [
+            StaffEvent(
+                user_id=user_id,
+                title=title,
+                content=content,
+            )
+            for user_id in staff_users
+        ]
     )
