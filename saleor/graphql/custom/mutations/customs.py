@@ -5,8 +5,6 @@ from graphene_django import DjangoObjectType
 from graphql_relay import from_global_id
 
 from saleor.account.error_codes import AccountErrorCode
-from saleor.account.notifications import send_staff_event_notification
-from saleor.core.utils.validators import user_is_valid
 from saleor.custom import models
 from saleor.custom.error_codes import CategoryCustomErrorCode
 from saleor.custom.models import CategoryCustom
@@ -15,6 +13,7 @@ from saleor.graphql.channel.utils import validate_channel
 from saleor.graphql.core.mutations import BaseMutation
 from saleor.graphql.core.types.common import CategoryCustomError
 from saleor.graphql.custom.resolvers import check_slug_exists
+from saleor.plugins.category.plugin import send_category_notification
 
 
 class CategoryCustomInput(graphene.InputObjectType):
@@ -54,16 +53,7 @@ class CategoryCustomCreate(BaseMutation):
         name = data.get("name")
         slug = data.get("slug")
         channel_slug = data.get("channel")
-        user = info.context.user
-        if not user_is_valid(user):
-            raise ValidationError(
-                {
-                    "Account": ValidationError(
-                        "Account not found.",
-                        code=AccountErrorCode.NOT_FOUND,
-                    )
-                }
-            )
+
         if channel_slug is not None:
             channel_slug = validate_channel(
                 channel_slug, error_class=AccountErrorCode
@@ -72,11 +62,9 @@ class CategoryCustomCreate(BaseMutation):
         check_slug_exists(slug)
 
         category_custom = CategoryCustom.objects.create(name=name, slug=slug)
-        send_staff_event_notification(
-            user,
+        send_category_notification(
             info.context.plugins,
-            title="Create Category",
-            content="You created category name: {}".format(name),
+            channel_slug=channel_slug,
         )
         return CategoryCustomCreate(category_custom=category_custom)
 
