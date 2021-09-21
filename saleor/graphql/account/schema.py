@@ -10,7 +10,7 @@ from .bulk_mutations import (
     CustomerBulkDelete,
     StaffBulkDelete,
     StaffEventBulkDelete,
-    StaffEventBulkUpdate,
+    StaffEventBulkMarkRead,
     UserBulkSetActive,
 )
 from .enums import CountryCodeEnum
@@ -268,5 +268,5 @@ class AccountMutations(graphene.ObjectType):
     # Staff event mutations
     staff_event_update = StaffEventMarkRead.Field()
     staff_event_delete = StaffEventDelete.Field()
-    staff_event_bulk_update = StaffEventBulkUpdate.Field()
+    staff_event_bulk_update = StaffEventBulkMarkRead.Field()
     staff_event_bulk_delete = StaffEventBulkDelete.Field()

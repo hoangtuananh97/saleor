@@ -131,7 +131,7 @@ class StaffEventBulkActions(BaseBulkMutation):
         raise NotImplementedError
 
 
-class StaffEventBulkUpdate(StaffEventBulkActions):
+class StaffEventBulkMarkRead(StaffEventBulkActions):
     class Meta:
         description = "Update seen for staff event."
         model = models.StaffEvent

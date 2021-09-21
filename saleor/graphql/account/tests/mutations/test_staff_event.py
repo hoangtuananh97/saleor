@@ -147,8 +147,8 @@ def test_staff_event_bulk_delete(
 
 
 STAFF_EVENT_BULK_UPDATE_MUTATION = """
-    mutation staffEventBulkUpdate($ids: [ID]!) {
-        staffEventBulkUpdate(ids: $ids) {
+    mutation StaffEventBulkMarkRead($ids: [ID]!) {
+        StaffEventBulkMarkRead(ids: $ids) {
             count
             errors{
                 code
