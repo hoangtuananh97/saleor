@@ -26,3 +26,16 @@ class StaffMemberStatus(graphene.Enum):
         elif self == StaffMemberStatus.DEACTIVATED:
             return "User account has not been activated yet."
         return None
+
+
+class StaffEventMarkRead(graphene.Enum):
+    SEEN = True
+    NO_SEEN = False
+
+    @property
+    def description(self):
+        if self == StaffEventMarkRead.SEEN:
+            return "Staff event mark read."
+        elif self == StaffEventMarkRead.NO_SEEN:
+            return "Staff event don't mark read."
+        return None

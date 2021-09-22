@@ -4697,19 +4697,19 @@ def staff_event(db):
 
 
 @pytest.fixture
-def staff_events(db):
-    checkouts_usd = StaffEvent.objects.bulk_create(
+def staff_events(db, staff_user):
+    return StaffEvent.objects.bulk_create(
         [
             StaffEvent(
                 title="title",
                 content="content",
-                user_id=1,
+                user_id=staff_user.id,
                 created_at="2021-09-15 12:12:12",
             ),
             StaffEvent(
                 title="title2",
                 content="content2",
-                user_id=1,
+                user_id=staff_user.id,
                 created_at="2021-09-17 12:12:12",
             ),
         ]

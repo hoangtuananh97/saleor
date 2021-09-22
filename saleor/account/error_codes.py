@@ -48,4 +48,4 @@ class PermissionGroupErrorCode(Enum):
 
 
 class StaffEventErrorCode(Enum):
-    NO_PERMISSION = "no_permission_mutation"
+    OUT_OF_SCOPE_PERMISSION = "out_of_scope_permission"

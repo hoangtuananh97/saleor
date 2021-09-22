@@ -77,7 +77,7 @@ class SitePermissions(BasePermissionEnum):
 
 
 class StaffEventPermissions(BasePermissionEnum):
-    MANAGE_STAFF_EVENT = "staff_event.manage_staff_event"
+    MANAGE_STAFF_EVENT = "account.manage_staff_event"
 
 
 PERMISSIONS_ENUMS = [

@@ -72,7 +72,6 @@ class AdminEmailPlugin(BasePlugin):
     PLUGIN_DESCRIPTION = "Plugin responsible for sending the staff emails."
     DEFAULT_ACTIVE = True
     CONFIGURATION_PER_CHANNEL = False
-    SEND_EMAIL_NOTIFY = True
 
     DEFAULT_CONFIGURATION = [
         {
@@ -242,7 +241,7 @@ class AdminEmailPlugin(BasePlugin):
         )
 
     def notify(self, event: NotifyEventType, payload: dict, previous_value):
-        if not self.active:
+        if not self.active and event != NotifyEventType.STAFF_EVENT:
             return previous_value
         event_map = get_admin_event_map()
         if event not in AdminNotifyEvent.CHOICES:
@@ -254,7 +253,7 @@ class AdminEmailPlugin(BasePlugin):
         if not template_map.get(event):
             return previous_value
 
-        payload["send_mail_notify"] = self.SEND_EMAIL_NOTIFY
+        payload["default_send_mail"] = self.DEFAULT_ACTIVE
         event_map[event](
             payload,
             asdict(self.config),  # type: ignore

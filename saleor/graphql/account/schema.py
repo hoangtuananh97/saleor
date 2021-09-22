@@ -1,7 +1,7 @@
 import graphene
 
-from ...core.permissions import AccountPermissions
-from ..core.fields import FilterInputConnectionField, PrefetchingConnectionField
+from ...core.permissions import AccountPermissions, StaffEventPermissions
+from ..core.fields import FilterInputConnectionField
 from ..core.types import FilterInputObjectType
 from ..core.utils import from_global_id_or_error
 from ..core.validators import validate_one_of_args_is_in_query
@@ -14,7 +14,12 @@ from .bulk_mutations import (
     UserBulkSetActive,
 )
 from .enums import CountryCodeEnum
-from .filters import CustomerFilter, PermissionGroupFilter, StaffUserFilter
+from .filters import (
+    CustomerFilter,
+    PermissionGroupFilter,
+    StaffEventFilter,
+    StaffUserFilter,
+)
 from .mutations.account import (
     AccountAddressCreate,
     AccountAddressDelete,
@@ -91,6 +96,11 @@ class PermissionGroupFilterInput(FilterInputObjectType):
 class StaffUserInput(FilterInputObjectType):
     class Meta:
         filterset_class = StaffUserFilter
+
+
+class StaffEventInput(FilterInputObjectType):
+    class Meta:
+        filterset_class = StaffEventFilter
 
 
 class AccountQueries(graphene.ObjectType):
@@ -198,11 +208,13 @@ class AccountQueries(graphene.ObjectType):
 
 
 class StaffEventQueries(graphene.ObjectType):
-    staff_events = PrefetchingConnectionField(
+    staff_events = FilterInputConnectionField(
         StaffEvent,
+        filter=StaffEventInput(description="Filtering options for staff event."),
         description="List history staff event notify.",
     )
 
+    @permission_required(StaffEventPermissions.MANAGE_STAFF_EVENT)
     def resolve_staff_events(self, info, **kwargs):
         user_id = info.context.user.id
         return resolve_staff_events(user_id)
@@ -266,7 +278,7 @@ class AccountMutations(graphene.ObjectType):
     permission_group_delete = PermissionGroupDelete.Field()
 
     # Staff event mutations
-    staff_event_update = StaffEventMarkRead.Field()
+    staff_event_mark_read = StaffEventMarkRead.Field()
     staff_event_delete = StaffEventDelete.Field()
-    staff_event_bulk_update = StaffEventBulkMarkRead.Field()
+    staff_event_bulk_mark_read = StaffEventBulkMarkRead.Field()
     staff_event_bulk_delete = StaffEventBulkDelete.Field()

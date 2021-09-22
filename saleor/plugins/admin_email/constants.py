@@ -46,23 +46,23 @@ CSV_EXPORT_FAILED_DEFAULT_SUBJECT = "Export products data"
 STAFF_PASSWORD_RESET_DEFAULT_SUBJECT = "Staff password reset"
 SET_STAFF_EVENT_DEFAULT_SUBJECT = "Staff Event e-mail"
 
-staff_password_notify = {
+STAFF_PASSWORD_NOTIFY = {
     "title": "Set Password",
     "content": "Notification set Password",
 }
-product_export_success_notify = {
+PRODUCT_EXPORT_SUCCESS_NOTIFY = {
     "title": "Export product success",
     "content": "Notification export product success",
 }
-order_confirmation_notify = {
+ORDER_CONFIRMATION_NOTIFY = {
     "title": "Order Confirmation",
     "content": "Notification new order confirmation",
 }
-product_export_failed_notify = {
+PRODUCT_EXPORT_FAILED_NOTIFY = {
     "title": "export product failed",
     "content": "Notification export product failed",
 }
-reset_password_notify = {
+RESET_PASSWORD_NOTIFY = {
     "title": "export product failed",
     "content": "Notification export product failed",
 }

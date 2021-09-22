@@ -18,6 +18,7 @@ from ..notify_events import (
     send_csv_export_failed,
     send_csv_product_export_success,
     send_set_staff_password_email,
+    send_staff_event_notify,
     send_staff_order_confirmation,
     send_staff_reset_password,
 )
@@ -31,6 +32,7 @@ def test_event_map():
         NotifyEventType.CSV_PRODUCT_EXPORT_SUCCESS: send_csv_product_export_success,
         NotifyEventType.CSV_EXPORT_FAILED: send_csv_export_failed,
         NotifyEventType.ACCOUNT_STAFF_RESET_PASSWORD: send_staff_reset_password,
+        NotifyEventType.STAFF_EVENT: send_staff_event_notify,
     }
 
 
@@ -42,6 +44,7 @@ def test_event_map():
         NotifyEventType.CSV_PRODUCT_EXPORT_SUCCESS,
         NotifyEventType.CSV_EXPORT_FAILED,
         NotifyEventType.ACCOUNT_STAFF_RESET_PASSWORD,
+        NotifyEventType.STAFF_EVENT,
     ],
 )
 @patch("saleor.plugins.admin_email.plugin.get_admin_event_map")

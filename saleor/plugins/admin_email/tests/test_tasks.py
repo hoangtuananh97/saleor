@@ -359,18 +359,17 @@ def test_send_staff_order_confirmation_email_task_custom_template(
 
 @mock.patch("saleor.plugins.email_common.send_mail")
 def test_send_staff_event_email_task_default_template(
-    mocked_send_mail, email_dict_config, staff_users
+    mocked_send_mail, email_dict_config, staff_user
 ):
     # give
     recipient_email = "admin@example.com"
     title = "title"
     content = "content"
     payload = {
-        "staff_user": staff_users.id,
-        "staff_user_email": staff_users.email,
+        "staff_user": [staff_user.id],
+        "staff_user_email": [staff_user.email],
         "title": title,
         "content": content,
-        "send_email": True,
         "domain": "localhost:8000",
         "site_name": "Saleor",
     }
@@ -384,9 +383,9 @@ def test_send_staff_event_email_task_default_template(
     assert mocked_send_mail.called
 
 
-@mock.patch("saleor.plugins.user_email.tasks.send_email")
+@mock.patch("saleor.plugins.admin_email.tasks.send_email")
 def test_send_staff_event_email_task_custom_template(
-    mocked_send_email, email_dict_config, staff_users
+    mocked_send_email, email_dict_config, staff_user
 ):
     # give
     expected_template_str = "<html><body>You create category success</body></html>"
@@ -395,11 +394,10 @@ def test_send_staff_event_email_task_custom_template(
     title = "title"
     content = "content"
     payload = {
-        "staff_user": staff_users.id,
-        "staff_user_email": staff_users.email,
+        "staff_user": [staff_user.id],
+        "staff_user_email": [staff_user.email],
         "title": title,
         "content": content,
-        "send_email": True,
         "domain": "localhost:8000",
         "site_name": "Saleor",
     }
@@ -417,7 +415,7 @@ def test_send_staff_event_email_task_custom_template(
     # then
     mocked_send_email.assert_called_with(
         config=email_config,
-        recipient_list=[recipient_email],
+        recipient_list=recipient_email,
         context=payload,
         subject=expected_subject,
         template_str=expected_template_str,

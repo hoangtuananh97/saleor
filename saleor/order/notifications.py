@@ -8,6 +8,7 @@ from ..core.notifications import get_site_context
 from ..core.notify_events import NotifyEventType
 from ..core.utils.url import prepare_url
 from ..discount import OrderDiscountType
+from ..plugins.admin_email.constants import ORDER_CONFIRMATION_NOTIFY
 from ..product import ProductMediaTypes
 from ..product.models import DigitalContentUrl, Product, ProductMedia, ProductVariant
 from ..product.product_images import AVAILABLE_PRODUCT_SIZES, get_thumbnail
@@ -294,6 +295,14 @@ def send_order_confirmation(order, redirect_url, manager):
             **get_site_context(),
         }
         manager.notify(NotifyEventType.STAFF_ORDER_CONFIRMATION, payload=payload)
+
+        payload_notify = {
+            "staff_users": user_ids,
+            "title": ORDER_CONFIRMATION_NOTIFY.get("title"),
+            "content": ORDER_CONFIRMATION_NOTIFY.get("content"),
+            "staff_user_email": recipient_emails,
+        }
+        manager.notify(NotifyEventType.STAFF_EVENT, payload=payload_notify)
 
 
 def send_order_confirmed(order, user, app, manager):

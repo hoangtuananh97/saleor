@@ -1,26 +1,26 @@
 import graphene
 from django.core.exceptions import ValidationError
 
+from saleor.account.error_codes import StaffEventErrorCode
 from saleor.core.permissions import StaffEventPermissions
 from saleor.graphql.core.mutations import BaseMutation
 from saleor.graphql.core.types.common import StaffEventError
 
 from ....account import models
-from ....account.error_codes import StaffEventErrorCode
 from ..types import StaffEvent
 
 
 class StaffEventMarkRead(BaseMutation):
 
-    staff_event = graphene.Field(StaffEvent, description="Staff Event updated")
+    staff_event = graphene.Field(StaffEvent, description="Staff Event mark read")
 
     class Arguments:
         staff_event_id = graphene.ID(
-            description="ID of a staff event to update.", required=True
+            description="ID of a staff event mark read.", required=True
         )
 
     class Meta:
-        description = "Update staff event."
+        description = "Staff Event mark read."
         model = models.StaffEvent
         permissions = (StaffEventPermissions.MANAGE_STAFF_EVENT,)
         error_type_class = StaffEventError
@@ -69,9 +69,9 @@ def check_staff_event_permission_mutation(user, staff_event):
     if user.id != staff_event.user_id:
         raise ValidationError(
             {
-                "StaffEvent": ValidationError(
-                    "User no permission.",
-                    code=StaffEventErrorCode.NO_PERMISSION,
+                "staff_event": ValidationError(
+                    message="User no permission for mutation staff event.",
+                    code=StaffEventErrorCode.OUT_OF_SCOPE_PERMISSION.value,
                 )
             }
         )

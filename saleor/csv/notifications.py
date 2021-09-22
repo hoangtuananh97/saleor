@@ -3,6 +3,10 @@ from typing import TYPE_CHECKING
 from ..core.notifications import get_site_context
 from ..core.notify_events import NotifyEventType
 from ..core.utils import build_absolute_uri
+from ..plugins.admin_email.constants import (
+    PRODUCT_EXPORT_FAILED_NOTIFY,
+    PRODUCT_EXPORT_SUCCESS_NOTIFY,
+)
 from ..plugins.manager import get_plugins_manager
 
 if TYPE_CHECKING:
@@ -27,8 +31,9 @@ def get_default_export_payload(export_file: "ExportFile") -> dict:
 
 def send_export_download_link_notification(export_file: "ExportFile"):
     """Call PluginManager.notify to trigger the notification for success export."""
+    export_payload = get_default_export_payload(export_file)
     payload = {
-        "export": get_default_export_payload(export_file),
+        "export": export_payload,
         "csv_link": build_absolute_uri(export_file.content_file.url),
         "recipient_email": export_file.user.email if export_file.user else None,
         **get_site_context(),
@@ -37,9 +42,14 @@ def send_export_download_link_notification(export_file: "ExportFile"):
     manager = get_plugins_manager()
     manager.notify(NotifyEventType.CSV_PRODUCT_EXPORT_SUCCESS, payload)
 
+    staff_event_csv_product_notify(
+        manager, export_payload, PRODUCT_EXPORT_SUCCESS_NOTIFY
+    )
+
 
 def send_export_failed_info(export_file: "ExportFile"):
     """Call PluginManager.notify to trigger the notification for failed export."""
+    export_payload = get_default_export_payload(export_file)
     payload = {
         "export": get_default_export_payload(export_file),
         "recipient_email": export_file.user.email if export_file.user else None,
@@ -47,3 +57,19 @@ def send_export_failed_info(export_file: "ExportFile"):
     }
     manager = get_plugins_manager()
     manager.notify(NotifyEventType.CSV_EXPORT_FAILED, payload)
+
+    staff_event_csv_product_notify(
+        manager, export_payload, PRODUCT_EXPORT_FAILED_NOTIFY
+    )
+
+
+def staff_event_csv_product_notify(manager, export_payload, notify_info):
+    staff_users = [export_payload["user_id"]]  # type: ignore
+    staff_user_email = [export_payload["user_email"]]  # type: ignore
+    payload_notify = {
+        "staff_users": staff_users,
+        "title": notify_info.get("title"),
+        "content": notify_info.get("content"),
+        "staff_user_email": staff_user_email,
+    }
+    manager.notify(NotifyEventType.STAFF_EVENT, payload=payload_notify)

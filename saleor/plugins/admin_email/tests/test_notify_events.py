@@ -6,10 +6,10 @@ from ..notify_events import (
     send_csv_export_failed,
     send_csv_product_export_success,
     send_set_staff_password_email,
+    send_staff_event_email,
     send_staff_order_confirmation,
     send_staff_reset_password,
 )
-from ..tasks import send_staff_event_email_task
 
 
 @mock.patch(
@@ -103,24 +103,23 @@ def test_send_csv_export_failed(mocked_email_task):
 
 
 @mock.patch(
-    "saleor.plugins.staff_event.notify_events.send_staff_event_email_task.delay"
+    "saleor.plugins.admin_email.notify_events.send_staff_event_email_task.delay"
 )
-def test_send_staff_event_email_task(mocked_email_task, staff_users, staff_event):
+def test_send_staff_event_email_task(mocked_email_task):
     # give
     title = "title"
     content = "content"
     payload = {
-        "staff_user": staff_users.id,
-        "staff_user_email": staff_users.email,
+        "staff_user": [1],
+        "staff_user_email": ["admin@gmail.com"],
         "title": title,
         "content": content,
-        "send_email": True,
         "domain": "localhost:8000",
         "site_name": "Saleor",
     }
     config = {"host": "localhost", "port": "1025"}
     # when
-    send_staff_event_email_task(payload=payload, config=config, plugin_configuration=[])
+    send_staff_event_email(payload=payload, config=config, plugin_configuration=[])
     # then
     mocked_email_task.assert_called_with(
         payload["staff_user_email"], payload, config, mock.ANY, mock.ANY

@@ -1,11 +1,16 @@
 import django_filters
 from django.db.models import Count, Exists, OuterRef, Q
 
-from ...account.models import Address, User
-from ..core.filters import EnumFilter, MetadataFilterBase, ObjectTypeFilter
-from ..core.types.common import DateRangeInput, IntRangeInput
+from ...account.models import Address, StaffEvent, User
+from ..core.filters import (
+    EnumFilter,
+    MetadataFilterBase,
+    ObjectTypeFilter,
+    filter_created_at,
+)
+from ..core.types.common import DateRangeInput, DateTimeRangeInput, IntRangeInput
 from ..utils.filters import filter_range_field
-from .enums import StaffMemberStatus
+from .enums import StaffEventMarkRead, StaffMemberStatus
 
 
 def filter_date_joined(qs, _, value):
@@ -57,6 +62,20 @@ def filter_search(qs, _, value):
     return qs
 
 
+def filter_staff_event_search(qs, _, value):
+    if value:
+        qs = qs.filter(Q(title__icontains=value) | Q(content__icontains=value))
+    return qs
+
+
+def filter_staff_event_mark_read(qs, _, value):
+    if value == StaffEventMarkRead.SEEN:
+        return qs.filter(is_seen=True)
+    if value == StaffEventMarkRead.NO_SEEN:
+        return qs.filter(is_seen=False)
+    return qs
+
+
 class CustomerFilter(MetadataFilterBase):
     date_joined = ObjectTypeFilter(
         input_class=DateRangeInput, method=filter_date_joined
@@ -93,3 +112,15 @@ class StaffUserFilter(django_filters.FilterSet):
     class Meta:
         model = User
         fields = ["status", "search"]
+
+
+class StaffEventFilter(django_filters.FilterSet):
+    created_at = ObjectTypeFilter(
+        input_class=DateTimeRangeInput, method=filter_created_at
+    )
+    search = django_filters.CharFilter(method=filter_staff_event_search)
+    is_seen = django_filters.BooleanFilter(method=filter_staff_event_mark_read)
+
+    class Meta:
+        model = StaffEvent
+        fields = ["search", "created_at", "is_seen"]

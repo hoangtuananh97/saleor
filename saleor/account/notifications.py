@@ -6,6 +6,7 @@ from django.contrib.auth.tokens import default_token_generator
 from ..core.notifications import get_site_context
 from ..core.notify_events import NotifyEventType
 from ..core.utils.url import prepare_url
+from ..plugins.admin_email.constants import RESET_PASSWORD_NOTIFY, STAFF_PASSWORD_NOTIFY
 from .models import User
 
 
@@ -30,9 +31,9 @@ def send_password_reset_notification(
     token = default_token_generator.make_token(user)
     params = urlencode({"email": user.email, "token": token})
     reset_url = prepare_url(params, redirect_url)
-
+    user_info = get_default_user_payload(user)
     payload = {
-        "user": get_default_user_payload(user),
+        "user": user_info,
         "recipient_email": user.email,
         "token": token,
         "reset_url": reset_url,
@@ -40,11 +41,11 @@ def send_password_reset_notification(
         **get_site_context(),
     }
 
-    event = (
-        NotifyEventType.ACCOUNT_STAFF_RESET_PASSWORD
-        if staff
-        else NotifyEventType.ACCOUNT_PASSWORD_RESET
-    )
+    if staff:
+        event = NotifyEventType.ACCOUNT_STAFF_RESET_PASSWORD
+        staff_event_account_notify(manager, user_info, RESET_PASSWORD_NOTIFY)
+    else:
+        event = NotifyEventType.ACCOUNT_PASSWORD_RESET
     manager.notify(event, payload=payload, channel_slug=channel_slug)
 
 
@@ -131,8 +132,9 @@ def send_set_password_notification(
     token = default_token_generator.make_token(user)
     params = urlencode({"email": user.email, "token": token})
     password_set_url = prepare_url(params, redirect_url)
+    user_info = get_default_user_payload(user)
     payload = {
-        "user": get_default_user_payload(user),
+        "user": user_info,
         "token": default_token_generator.make_token(user),
         "recipient_email": user.email,
         "password_set_url": password_set_url,
@@ -141,6 +143,19 @@ def send_set_password_notification(
     }
     if staff:
         event = NotifyEventType.ACCOUNT_SET_STAFF_PASSWORD
+        staff_event_account_notify(manager, user_info, STAFF_PASSWORD_NOTIFY)
     else:
         event = NotifyEventType.ACCOUNT_SET_CUSTOMER_PASSWORD
     manager.notify(event, payload=payload, channel_slug=channel_slug)
+
+
+def staff_event_account_notify(manager, user_info, notify_info):
+    staff_users = [user_info["id"]]  # type: ignore
+    staff_user_email = [user_info["email"]]  # type: ignore
+    payload_notify = {
+        "staff_users": staff_users,
+        "title": notify_info.get("title"),
+        "content": notify_info.get("content"),
+        "staff_user_email": staff_user_email,
+    }
+    manager.notify(NotifyEventType.STAFF_EVENT, payload=payload_notify)

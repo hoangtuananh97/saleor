@@ -113,7 +113,7 @@ class UserBulkSetActive(BaseBulkMutation):
         queryset.update(is_active=is_active)
 
 
-class StaffEventBulkActions(BaseBulkMutation):
+class BaseStaffEventBulkActions(BaseBulkMutation):
     class Arguments:
         ids = graphene.List(
             graphene.ID, required=True, description="List of staff event IDs."
@@ -131,9 +131,9 @@ class StaffEventBulkActions(BaseBulkMutation):
         raise NotImplementedError
 
 
-class StaffEventBulkMarkRead(StaffEventBulkActions):
+class StaffEventBulkMarkRead(BaseStaffEventBulkActions):
     class Meta:
-        description = "Update seen for staff event."
+        description = "Staff event mark read."
         model = models.StaffEvent
         permissions = (StaffEventPermissions.MANAGE_STAFF_EVENT,)
         error_type_class = StaffEventError
@@ -144,9 +144,9 @@ class StaffEventBulkMarkRead(StaffEventBulkActions):
         queryset.update(is_seen=True)
 
 
-class StaffEventBulkDelete(BaseBulkMutation):
+class StaffEventBulkDelete(BaseStaffEventBulkActions):
     class Meta:
-        description = "Delete staff event."
+        description = "Staff event delete ."
         model = models.StaffEvent
         permissions = (StaffEventPermissions.MANAGE_STAFF_EVENT,)
         error_type_class = StaffEventError
