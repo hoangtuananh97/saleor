@@ -136,7 +136,7 @@ def test_staff_event_bulk_delete(
     assert not data["errors"]
 
 
-STAFF_EVENT_BULK_UPDATE_MUTATION = """
+STAFF_EVENT_BULK_MARK_READ_MUTATION = """
     mutation StaffEventBulkMarkRead($ids: [ID]!) {
         staffEventBulkMarkRead(ids: $ids) {
             count
@@ -149,11 +149,11 @@ STAFF_EVENT_BULK_UPDATE_MUTATION = """
 """
 
 
-def test_staff_event_bulk_update(
+def test_staff_event_bulk_make_read(
     staff_api_client, staff_events, permission_manage_staff_event
 ):
     # give
-    query = STAFF_EVENT_BULK_UPDATE_MUTATION
+    query = STAFF_EVENT_BULK_MARK_READ_MUTATION
     variables = {
         "ids": [
             graphene.Node.to_global_id("StaffEvent", staff_event.id)

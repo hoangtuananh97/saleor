@@ -291,7 +291,6 @@ def send_order_confirmation(order, redirect_url, manager):
         payload = {
             "order": payload["order"],
             "recipient_list": recipient_emails,
-            "recipient_id_list": user_ids,
             **get_site_context(),
         }
         manager.notify(NotifyEventType.STAFF_ORDER_CONFIRMATION, payload=payload)
