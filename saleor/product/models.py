@@ -856,10 +856,8 @@ class CollectionTranslation(SeoModelTranslation):
 
 
 class ProductClassRecommendation(models.Model):
-    product_variant_channel_listing = models.ForeignKey(
+    listing = models.ForeignKey(
         ProductVariantChannelListing,
-        null=False,
-        blank=False,
         on_delete=models.CASCADE,
         related_name="products_class_recommendation",
     )
@@ -869,23 +867,34 @@ class ProductClassRecommendation(models.Model):
         blank=True, null=True, max_length=256
     )
     status = models.CharField(
-        choices=ProductClassRecommendationType.CHOICES, max_length=128
+        choices=ProductClassRecommendationType.CHOICES,
+        max_length=128,
+        default=ProductClassRecommendationType.DRAFT,
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="staff_created_product_class",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
     )
     updated_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        related_name="staff_updated",
+        related_name="staff_updated_product_class",
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
     )
     approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        related_name="staff_approved",
+        related_name="staff_approved_product_class",
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
     )
-    approved_date = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
+    approved_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         ordering = ("pk",)

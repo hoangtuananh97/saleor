@@ -17,7 +17,7 @@ class ProductClassRecommendationType:
     APPROVED = "APPROVED"
 
     CHOICES = [
-        (DRAFT, "Initial product recommendation"),
-        (SUBMITTED, "Product submitted, waiting for approval"),
-        (APPROVED, "Product approved"),
+        (DRAFT, "Initial product class recommendation"),
+        (SUBMITTED, "Product class submitted, waiting for approval"),
+        (APPROVED, "Product class approved"),
     ]
