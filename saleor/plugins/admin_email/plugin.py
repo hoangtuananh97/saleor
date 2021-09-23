@@ -253,7 +253,7 @@ class AdminEmailPlugin(BasePlugin):
         if not template_map.get(event):
             return previous_value
 
-        payload["default_send_mail"] = self.DEFAULT_ACTIVE
+        payload["default_send_mail"] = self.active
         event_map[event](
             payload,
             asdict(self.config),  # type: ignore

@@ -2,8 +2,8 @@ import graphene
 
 from saleor.graphql.tests.utils import assert_no_permission, get_graphql_content
 
-QUERY_LIST_STAFF_EVENT = """
 # Write your query or mutation here
+QUERY_LIST_STAFF_EVENT = """
 query GetStaffEvents($first: Int, $last: Int, $filter: StaffEventInput) {
   staffEvents(first: $first, last: $last, filter: $filter) {
     edges {
