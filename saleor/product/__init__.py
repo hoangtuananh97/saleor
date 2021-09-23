@@ -9,3 +9,15 @@ class ProductMediaTypes:
         (IMAGE, "An uploaded image or an URL to an image"),
         (VIDEO, "A URL to an external video"),
     ]
+
+
+class ProductClassRecommendationType:
+    DRAFT = "DRAFT"
+    SUBMITTED = "SUBMITTED"
+    APPROVED = "APPROVED"
+
+    CHOICES = [
+        (DRAFT, "Initial product recommendation"),
+        (SUBMITTED, "Product submitted, waiting for approval"),
+        (APPROVED, "Product approved"),
+    ]

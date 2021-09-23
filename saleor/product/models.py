@@ -49,7 +49,7 @@ from ..core.weight import zero_weight
 from ..discount import DiscountInfo
 from ..discount.utils import calculate_discounted_price
 from ..seo.models import SeoModel, SeoModelTranslation
-from . import ProductMediaTypes
+from . import ProductClassRecommendationType, ProductMediaTypes
 
 if TYPE_CHECKING:
     # flake8: noqa
@@ -853,3 +853,40 @@ class CollectionTranslation(SeoModelTranslation):
             }
         )
         return translated_keys
+
+
+class ProductClassRecommendation(models.Model):
+    product_variant_channel_listing = models.ForeignKey(
+        ProductVariantChannelListing,
+        null=False,
+        blank=False,
+        on_delete=models.CASCADE,
+        related_name="products_class_recommendation",
+    )
+    product_class_qty = models.CharField(blank=True, null=True, max_length=256)
+    product_class_value = models.CharField(blank=True, null=True, max_length=256)
+    product_class_recommendation = models.CharField(
+        blank=True, null=True, max_length=256
+    )
+    status = models.CharField(
+        choices=ProductClassRecommendationType.CHOICES, max_length=128
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="staff_updated",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="staff_approved",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+    )
+    approved_date = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ("pk",)
+        app_label = "product"
