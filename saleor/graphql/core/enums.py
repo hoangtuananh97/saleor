@@ -27,6 +27,7 @@ from ...page import error_codes as page_error_codes
 from ...payment import error_codes as payment_error_codes
 from ...plugins import error_codes as plugin_error_codes
 from ...product import error_codes as product_error_codes
+from ...product_class import error_codes as product_class_error_codes
 from ...shipping import error_codes as shipping_error_codes
 from ...warehouse import error_codes as warehouse_error_codes
 from ...webhook import error_codes as webhook_error_codes
@@ -133,4 +134,7 @@ WishlistErrorCode = graphene.Enum.from_enum(wishlist_error_codes.WishlistErrorCo
 TranslationErrorCode = graphene.Enum.from_enum(core_error_codes.TranslationErrorCode)
 CategoryCustomErrorCode = graphene.Enum.from_enum(
     custom_error_codes.CategoryCustomErrorCode
+)
+ProductClassRecommendationErrorCode = graphene.Enum.from_enum(
+    product_class_error_codes.ProductClassRecommendationErrorCode
 )

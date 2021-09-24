@@ -76,6 +76,10 @@ class SitePermissions(BasePermissionEnum):
     MANAGE_TRANSLATIONS = "site.manage_translations"
 
 
+class ProductClassPermissions(BasePermissionEnum):
+    MANAGE_PRODUCT_CLASS = "product_class.manage_product_class"
+
+
 PERMISSIONS_ENUMS = [
     AccountPermissions,
     AppPermission,
@@ -93,6 +97,7 @@ PERMISSIONS_ENUMS = [
     ShippingPermissions,
     SitePermissions,
     CheckoutPermissions,
+    ProductClassPermissions,
 ]
 
 

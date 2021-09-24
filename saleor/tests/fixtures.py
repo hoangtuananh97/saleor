@@ -100,6 +100,8 @@ from ..product.models import (
     VariantMedia,
 )
 from ..product.tests.utils import create_image
+from ..product_class import ProductClassRecommendationType
+from ..product_class.models import ProductClassRecommendation
 from ..shipping.models import (
     ShippingMethod,
     ShippingMethodChannelListing,
@@ -4679,3 +4681,66 @@ def app_manifest():
         "configurationUrl": "http://127.0.0.1:5000/configuration/",
         "tokenTargetUrl": "http://127.0.0.1:5000/configuration/install",
     }
+
+
+@pytest.fixture
+def channel_variant(product, channel_USD) -> ProductVariantChannelListing:
+    product_variant = ProductVariant.objects.create(product=product, sku="SKU_A")
+    listing = ProductVariantChannelListing.objects.create(
+        variant=product_variant,
+        channel=channel_USD,
+        price_amount=Decimal(10),
+        cost_price_amount=Decimal(1),
+        currency=channel_USD.currency_code,
+    )
+    return listing
+
+
+@pytest.fixture
+def permission_manage_product_class():
+    return Permission.objects.get(codename="manage_product_class")
+
+
+@pytest.fixture
+def product_class_recommendation(db, staff_user, channel_variant):
+    return ProductClassRecommendation.objects.create(
+        listing_id=channel_variant.id,
+        product_class_qty="product_class_qty",
+        product_class_value="product_class_value",
+        product_class_recommendation="product_class_recommendation",
+        status=ProductClassRecommendationType.DRAFT,
+        created_by_id=staff_user.id,
+        updated_by_id=staff_user.id,
+        approved_by_id=staff_user.id,
+        approved_at="2019-03-15T12:00:00.000Z",
+    )
+
+
+@pytest.fixture
+def products_class_recommendation(db, staff_user, channel_variant):
+    return ProductClassRecommendation.objects.bulk_create(
+        [
+            ProductClassRecommendation(
+                listing_id=channel_variant.id,
+                product_class_qty="product_class_qty",
+                product_class_value="product_class_value",
+                product_class_recommendation="product_class_recommendation",
+                status=ProductClassRecommendationType.DRAFT,
+                created_by_id=staff_user.id,
+                updated_by_id=staff_user.id,
+                approved_by_id=staff_user.id,
+                approved_at="2019-03-15T12:00:00.000Z",
+            ),
+            ProductClassRecommendation(
+                listing_id=channel_variant.id,
+                product_class_qty="product_class_qty",
+                product_class_value="product_class_value",
+                product_class_recommendation="product_class_recommendation",
+                status=ProductClassRecommendationType.DRAFT,
+                created_by_id=staff_user.id,
+                updated_by_id=staff_user.id,
+                approved_by_id=staff_user.id,
+                approved_at="2019-03-15T12:00:00.000Z",
+            ),
+        ]
+    )

@@ -15,7 +15,7 @@ def filter_fields_containing_value(*search_fields: str):
     return _filter_qs
 
 
-def filter_by_query_param(queryset, query, search_fields):
+def filter_by_query_param(queryset, query, search_fields, types="icontains"):
     """Filter queryset according to given parameters.
 
     Keyword Arguments:
@@ -25,9 +25,7 @@ def filter_by_query_param(queryset, query, search_fields):
 
     """
     if query:
-        query_by = {
-            "{0}__{1}".format(field, "icontains"): query for field in search_fields
-        }
+        query_by = {"{0}__{1}".format(field, types): query for field in search_fields}
         query_objects = Q()
         for q in query_by:
             query_objects |= Q(**{q: query_by[q]})

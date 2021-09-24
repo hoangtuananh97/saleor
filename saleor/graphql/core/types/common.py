@@ -29,6 +29,7 @@ from ..enums import (
     PermissionEnum,
     PermissionGroupErrorCode,
     PluginErrorCode,
+    ProductClassRecommendationErrorCode,
     ProductErrorCode,
     ShippingErrorCode,
     ShopErrorCode,
@@ -463,4 +464,10 @@ class CategoryCustomError(Error):
         graphene.NonNull(graphene.ID),
         description="List of attribute values IDs which causes the error.",
         required=False,
+    )
+
+
+class ProductClassRecommendationError(Error):
+    code = ProductClassRecommendationErrorCode(
+        description="The error code.", required=True
     )

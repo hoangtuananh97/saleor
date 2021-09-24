@@ -6,6 +6,7 @@ from ...core.tracing import traced_resolver
 from ...order import OrderStatus
 from ...order.models import Order
 from ...product import models
+from ...product_class.models import ProductClassRecommendation
 from ..channel import ChannelQsContext
 from ..core.utils import from_global_id_or_error
 from ..utils import get_user_or_app_from_context
@@ -168,3 +169,11 @@ def resolve_report_product_sales(period, channel_slug) -> ChannelQsContext:
     qs = qs.order_by("-quantity_ordered")
 
     return ChannelQsContext(qs=qs, channel_slug=channel_slug)
+
+
+def resolve_products_class_recommendation(_info, **_kwargs):
+    return ProductClassRecommendation.objects.all()
+
+
+def resolve_product_class_recommendation(pk):
+    return ProductClassRecommendation.objects.filter(id=pk).first()
