@@ -23,6 +23,11 @@ from ..translations.mutations import (
     ProductVariantTranslate,
 )
 from ..utils import get_user_or_app_from_context
+from .bulk_mutations.product_class_recommendation import (
+    ProductClassRecommendationBulDelete,
+    ProductClassRecommendationBulkCreate,
+    ProductClassRecommendationBulkUpdate,
+)
 from .bulk_mutations.products import (
     CategoryBulkDelete,
     CollectionBulkDelete,
@@ -490,3 +495,12 @@ class ProductMutations(graphene.ObjectType):
     product_class_recommendation_create = ProductClassRecommendationCreate.Field()
     product_class_recommendation_update = ProductClassRecommendationUpdate.Field()
     product_class_recommendation_delete = ProductClassRecommendationDelete.Field()
+    product_class_recommendation_bulk_create = (
+        ProductClassRecommendationBulkCreate.Field()
+    )
+    product_class_recommendation_bulk_update = (
+        ProductClassRecommendationBulkUpdate.Field()
+    )
+    product_class_recommendation_bulk_delete = (
+        ProductClassRecommendationBulDelete.Field()
+    )

@@ -1,0 +1,220 @@
+import graphene
+
+from saleor.graphql.tests.utils import get_graphql_content, assert_no_permission
+
+QUERY_PRODUCT_CLASS_BULK_CREATE = """
+mutation ProductClassRecommendationBulkCreate($input: [ProductClassRecommendationInput!]!){
+    productClassRecommendationBulkCreate(input: $input){
+        count
+        productClassRecommendations{
+            id
+            productClassQty
+            productClassValue
+            productClassRecommendation
+            status
+        }
+
+    }
+}
+"""
+
+
+def test_product_class_bulk_create(
+        staff_api_client, channel_variant, permission_manage_product_class
+):
+    # give
+    listing_id_expect = channel_variant.id
+    listing_id_convert = graphene.Node.to_global_id(
+        "ProductVariantChannelListing", listing_id_expect
+    )
+    param = [
+        {
+            "listing": listing_id_convert,
+            "productClassQty": "product_class_qty",
+            "productClassValue": "product_class_value",
+            "productClassRecommendation": "product_class_recommendation",
+        }
+    ]
+    query = QUERY_PRODUCT_CLASS_BULK_CREATE
+    variables = {"input": param}
+
+    # when
+    response = staff_api_client.post_graphql(
+        query, variables, permissions=[permission_manage_product_class]
+    )
+
+    # then
+    content = get_graphql_content(response)
+
+    data = content["data"]["productClassRecommendationBulkCreate"]
+    assert len(param) == int(data["count"])
+
+
+def test_product_class_create_no_permission(
+        staff_api_client, channel_variant, product_class_recommendation
+):
+    # give
+    listing_id_expect = channel_variant.id
+    param = [
+        {
+            "listing": listing_id_expect,
+            "productClassQty": "product_class_qty",
+            "productClassValue": "product_class_value",
+            "productClassRecommendation": "product_class_recommendation",
+        }
+    ]
+    query = QUERY_PRODUCT_CLASS_BULK_CREATE
+    variables = {"input": param}
+
+    # when
+    response = staff_api_client.post_graphql(query, variables)
+
+    # then
+    assert_no_permission(response)
+
+
+QUERY_PRODUCT_CLASS_BULK_UPDATE = """
+mutation ProductClassRecommendationBulkUpdate($input: [ProductClassRecommendationBulkUpdateInput!]!){
+    productClassRecommendationBulkUpdate(input: $input){
+        count
+        productClassRecommendations{
+            id
+            productClassQty
+            productClassValue
+            productClassRecommendation
+            status
+        }
+
+    }
+}
+"""
+
+
+def test_product_class_update(
+        staff_api_client,
+        channel_variant,
+        product_class_recommendation,
+        permission_manage_product_class,
+):
+    # give
+    product_class_id_expect = product_class_recommendation.id
+    listing_id_expect = channel_variant.id
+
+    product_class_id = graphene.Node.to_global_id(
+        "ProductClassRecommendation", product_class_id_expect
+    )
+    listing_id_convert = graphene.Node.to_global_id(
+        "ProductVariantChannelListing", listing_id_expect
+    )
+    param = [
+        {
+            "id": product_class_id,
+            "listing": listing_id_convert,
+            "productClassQty": "product_class_qty123",
+            "productClassValue": "product_class_value123",
+            "productClassRecommendation": "product_class_recommendation",
+        }
+    ]
+    query = QUERY_PRODUCT_CLASS_BULK_UPDATE
+    variables = {"input": param}
+
+    # when
+    response = staff_api_client.post_graphql(
+        query, variables, permissions=[permission_manage_product_class]
+    )
+
+    # then
+    content = get_graphql_content(response)
+    product_class_recommendation.refresh_from_db()
+    data = content["data"]["productClassRecommendationBulkUpdate"]
+    product_class = data["productClassRecommendations"][0]
+    product_class_qty = product_class_recommendation.product_class_qty
+    product_class_value = product_class_recommendation.product_class_value
+
+    assert len(param) == data["count"]
+    assert product_class["productClassQty"] == product_class_qty
+    assert product_class["productClassValue"] == product_class_value
+
+
+def test_product_class_update_no_permission(
+        staff_api_client,
+        channel_variant,
+        product_class_recommendation,
+        permission_manage_product_class,
+):
+    # give
+    product_class_id_expect = product_class_recommendation.id
+    listing_id_expect = channel_variant.id
+
+    product_class_id = graphene.Node.to_global_id(
+        "ProductClassRecommendation", product_class_id_expect
+    )
+    listing_id_convert = graphene.Node.to_global_id(
+        "ProductVariantChannelListing", listing_id_expect
+    )
+    param = [
+        {
+            "id": product_class_id,
+            "listing": listing_id_convert,
+            "productClassQty": "product_class_qty123",
+            "productClassValue": "product_class_value123",
+            "productClassRecommendation": "product_class_recommendation",
+        }
+    ]
+    query = QUERY_PRODUCT_CLASS_BULK_UPDATE
+    variables = {"input": param}
+
+    # when
+    response = staff_api_client.post_graphql(query, variables)
+
+    # then
+    assert_no_permission(response)
+
+
+QUERY_PRODUCT_CLASS_DELETE_BULK = """
+mutation ProductClassRecommendationBulkDelete($ids: [ID]!){
+    productClassRecommendationBulkDelete(ids: $ids){
+        count
+        }
+}
+"""
+
+
+def test_product_class_delete(
+        staff_api_client, product_class_recommendation, permission_manage_product_class
+):
+    # give
+    product_class_id = graphene.Node.to_global_id(
+        "ProductClassRecommendation", product_class_recommendation.id
+    )
+    product_class_ids = [product_class_id]
+    query = QUERY_PRODUCT_CLASS_DELETE_BULK
+    variables = {"ids": product_class_ids}
+
+    # when
+    response = staff_api_client.post_graphql(
+        query, variables, permissions=[permission_manage_product_class]
+    )
+
+    # then
+    content = get_graphql_content(response)
+    data = content["data"]["productClassRecommendationBulkDelete"]
+    assert data["count"] == len(product_class_ids)
+
+
+def test_product_class_delete_no_permission(
+        staff_api_client, product_class_recommendation
+):
+    # give
+    product_class_id_expect = product_class_recommendation.id
+    product_class_id = graphene.Node.to_global_id(
+        "ProductClassRecommendation", product_class_id_expect
+    )
+    query = QUERY_PRODUCT_CLASS_DELETE_BULK
+    variables = {"ids": [product_class_id]}
+
+    # when
+    response = staff_api_client.post_graphql(query, variables)
+
+    # then
+    assert_no_permission(response)
