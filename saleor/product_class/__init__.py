@@ -1,4 +1,4 @@
-class ProductClassRecommendationType:
+class ProductClassRecommendationStatus:
     DRAFT = "DRAFT"
     SUBMITTED = "SUBMITTED"
     APPROVED = "APPROVED"

@@ -1,9 +1,9 @@
 import graphene
 
 from saleor.graphql.core.enums import to_enum
-from saleor.product_class import ProductClassRecommendationType
+from saleor.product_class import ProductClassRecommendationStatus
 
-ProductClassRecommendationEnum = to_enum(ProductClassRecommendationType)
+ProductClassRecommendationEnum = to_enum(ProductClassRecommendationStatus)
 
 
 class ProductAttributeType(graphene.Enum):

@@ -30,7 +30,6 @@ from ...product.models import (
     ProductVariant,
     ProductVariantChannelListing,
 )
-from ...product_class.models import ProductClassRecommendation
 from ...warehouse.models import Allocation, Stock
 from ..channel.filters import get_channel_slug_from_filter_data
 from ..core.filters import (
@@ -38,22 +37,15 @@ from ..core.filters import (
     ListObjectTypeFilter,
     MetadataFilterBase,
     ObjectTypeFilter,
-    filter_created_at,
-    filter_updated_at,
 )
 from ..core.types import ChannelFilterInputObjectType, FilterInputObjectType
-from ..core.types.common import DateTimeRangeInput, IntRangeInput, PriceRangeInput
+from ..core.types.common import IntRangeInput, PriceRangeInput
 from ..utils import resolve_global_ids_to_primary_keys
-from ..utils.filters import (
-    filter_by_query_param,
-    filter_fields_containing_value,
-    filter_range_field,
-)
+from ..utils.filters import filter_fields_containing_value, filter_range_field
 from ..warehouse import types as warehouse_types
 from . import types as product_types
 from .enums import (
     CollectionPublished,
-    ProductClassRecommendationEnum,
     ProductTypeConfigurable,
     ProductTypeEnum,
     StockAvailability,
@@ -543,30 +535,6 @@ def filter_quantity(qs, quantity_value, warehouses=None):
     return qs.filter(variants__in=product_variants)
 
 
-def filter_approved_at(qs, _, value):
-    return filter_range_field(qs, "approved_at", value)
-
-
-def filter_product_class_search(qs, _, value):
-    if value:
-        qs = qs.filter(
-            Q(product_class_qty__icontains=value)
-            | Q(product_class_value__icontains=value)
-            | Q(product_class_recommendation__icontains=value)
-        )
-    return qs
-
-
-def filter_product_class_status(qs, _, value):
-    if value == ProductClassRecommendationEnum.DRAFT:
-        return qs.filter(status=value)
-    if value == ProductClassRecommendationEnum.SUBMITTED:
-        return qs.filter(status=value)
-    if value == ProductClassRecommendationEnum.APPROVED:
-        return qs.filter(status=value)
-    return qs
-
-
 class ProductStockFilterInput(graphene.InputObjectType):
     warehouse_ids = graphene.List(graphene.NonNull(graphene.ID), required=False)
     quantity = graphene.Field(IntRangeInput, required=False)
@@ -694,68 +662,6 @@ class ProductTypeFilter(MetadataFilterBase):
         fields = ["search", "configurable", "product_type"]
 
 
-def filter_fields_ids_value(*search_fields):
-    def _filter_qs(qs, _, value):
-        if value:
-            _, pks = resolve_global_ids_to_primary_keys(
-                value, product_types.ProductClassRecommendation
-            )
-            qs = filter_by_query_param(qs, pks, search_fields, types="in")
-        return qs
-
-    return _filter_qs
-
-
-class ProductClassRecommendationFilter(django_filters.FilterSet):
-    created_at = ObjectTypeFilter(
-        input_class=DateTimeRangeInput, method=filter_created_at
-    )
-    updated_at = ObjectTypeFilter(
-        input_class=DateTimeRangeInput, method=filter_updated_at
-    )
-    approved_at = ObjectTypeFilter(
-        input_class=DateTimeRangeInput, method=filter_approved_at
-    )
-
-    search = django_filters.CharFilter(method=filter_product_class_search)
-    status = django_filters.CharFilter(method=filter_product_class_status)
-    created_by_ids = GlobalIDMultipleChoiceFilter(
-        method=filter_fields_ids_value(
-            "created_by_id",
-        )
-    )
-    updated_by_ids = GlobalIDMultipleChoiceFilter(
-        method=filter_fields_ids_value(
-            "updated_by_id",
-        )
-    )
-    approved_by_ids = GlobalIDMultipleChoiceFilter(
-        method=filter_fields_ids_value(
-            "approved_by_id",
-        )
-    )
-    listing_ids = GlobalIDMultipleChoiceFilter(
-        method=filter_fields_ids_value(
-            "listing_id",
-        )
-    )
-
-    class Meta:
-        model = ProductClassRecommendation
-        fields = [
-            "search",
-            "created_at",
-            "created_at",
-            "updated_at",
-            "approved_at",
-            "status",
-            "created_by_ids",
-            "updated_by_ids",
-            "approved_by_ids",
-            "listing_ids",
-        ]
-
-
 class ProductFilterInput(ChannelFilterInputObjectType):
     class Meta:
         filterset_class = ProductFilter
@@ -779,8 +685,3 @@ class CategoryFilterInput(FilterInputObjectType):
 class ProductTypeFilterInput(FilterInputObjectType):
     class Meta:
         filterset_class = ProductTypeFilter
-
-
-class ProductClassRecommendationFilterInput(FilterInputObjectType):
-    class Meta:
-        filterset_class = ProductClassRecommendationFilter

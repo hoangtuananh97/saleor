@@ -1,6 +1,7 @@
 import graphene
+from graphql_relay import from_global_id
 
-from saleor.graphql.tests.utils import get_graphql_content, assert_no_permission
+from saleor.graphql.tests.utils import assert_no_permission, get_graphql_content
 
 QUERY_PRODUCT_CLASS_CREATE = """
 mutation ProductClassRecommendationCreate($input: ProductClassRecommendationInput!){
@@ -21,9 +22,7 @@ mutation ProductClassRecommendationCreate($input: ProductClassRecommendationInpu
 
 
 def test_product_class_create(
-        staff_api_client,
-        channel_variant,
-        permission_manage_product_class
+        staff_api_client, channel_variant, permission_manage_product_class
 ):
     # give
     listing_id_expect = channel_variant.id
@@ -31,11 +30,10 @@ def test_product_class_create(
         "ProductVariantChannelListing", listing_id_expect
     )
     param = {
-        "listingId": listing_id_convert,
+        "listing": listing_id_convert,
         "productClassQty": "product_class_qty",
         "productClassValue": "product_class_value",
         "productClassRecommendation": "product_class_recommendation",
-        "approvedAt": "2019-03-15T12:00:00.000Z"
     }
     query = QUERY_PRODUCT_CLASS_CREATE
     variables = {"input": param}
@@ -48,9 +46,8 @@ def test_product_class_create(
     # then
     content = get_graphql_content(response)
 
-    listing_id = \
-    content["data"]["productClassRecommendationCreate"]["productClassRecommendation"][
-        "listing"]["id"]
+    data = content["data"]["productClassRecommendationCreate"]
+    listing_id = data["productClassRecommendation"]["listing"]["id"]
     _, listing_id = graphene.Node.from_global_id(listing_id)
     assert int(listing_id) == listing_id_expect
 
@@ -61,11 +58,10 @@ def test_product_class_create_no_permission(
     # give
     listing_id_expect = channel_variant.id
     param = {
-        "listingId": listing_id_expect,
+        "listing": listing_id_expect,
         "productClassQty": "product_class_qty",
         "productClassValue": "product_class_value",
         "productClassRecommendation": "product_class_recommendation",
-        "approvedAt": "2019-03-15T12:00:00.000Z"
     }
     query = QUERY_PRODUCT_CLASS_CREATE
     variables = {"input": param}
@@ -98,7 +94,7 @@ def test_product_class_update(
         staff_api_client,
         channel_variant,
         product_class_recommendation,
-        permission_manage_product_class
+        permission_manage_product_class,
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -111,11 +107,10 @@ def test_product_class_update(
         "ProductVariantChannelListing", listing_id_expect
     )
     param = {
-        "listingId": listing_id_convert,
+        "listing": listing_id_convert,
         "productClassQty": "product_class_qty123",
         "productClassValue": "product_class_value123",
         "productClassRecommendation": "product_class_recommendation",
-        "approvedAt": "2019-03-15T12:00:00.000Z"
     }
     query = QUERY_PRODUCT_CLASS_UPDATE
     variables = {"input": param, "id": product_class_id}
@@ -128,19 +123,19 @@ def test_product_class_update(
     # then
     content = get_graphql_content(response)
     product_class_recommendation.refresh_from_db()
-    product_class = content["data"]["productClassRecommendationUpdate"][
-        "productClassRecommendation"]
-    assert product_class[
-               "productClassQty"] == product_class_recommendation.product_class_qty
-    assert product_class[
-               "productClassValue"] == product_class_recommendation.product_class_value
+    data = content["data"]["productClassRecommendationUpdate"]
+    product_class = data["productClassRecommendation"]
+    product_class_qty = product_class_recommendation.product_class_qty
+    product_class_value = product_class_recommendation.product_class_value
+    assert product_class["productClassQty"] == product_class_qty
+    assert product_class["productClassValue"] == product_class_value
 
 
 def test_product_class_update_no_permission(
         staff_api_client,
         channel_variant,
         product_class_recommendation,
-        permission_manage_product_class
+        permission_manage_product_class,
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -150,11 +145,10 @@ def test_product_class_update_no_permission(
         "ProductClassRecommendation", product_class_id_expect
     )
     param = {
-        "listingId": listing_id_expect,
+        "listing": listing_id_expect,
         "productClassQty": "product_class_qty123",
         "productClassValue": "product_class_value123",
         "productClassRecommendation": "product_class_recommendation",
-        "approvedAt": "2019-03-15T12:00:00.000Z"
     }
     query = QUERY_PRODUCT_CLASS_UPDATE
     variables = {"input": param, "id": product_class_id}
@@ -169,7 +163,9 @@ def test_product_class_update_no_permission(
 QUERY_PRODUCT_CLASS_DELETE = """
 mutation ProductClassRecommendationDelete($id: ID!){
     productClassRecommendationDelete(id: $id){
-        deleted
+        productClassRecommendation{
+            id
+        }
     }
 }
 """
@@ -179,7 +175,7 @@ def test_product_class_delete(
         staff_api_client, product_class_recommendation, permission_manage_product_class
 ):
     # give
-    deleted_expect = True
+    product_class_id_expect = product_class_recommendation.id
     product_class_id = graphene.Node.to_global_id(
         "ProductClassRecommendation", product_class_recommendation.id
     )
@@ -188,15 +184,15 @@ def test_product_class_delete(
 
     # when
     response = staff_api_client.post_graphql(
-        query,
-        variables,
-        permissions=[permission_manage_product_class]
+        query, variables, permissions=[permission_manage_product_class]
     )
 
     # then
     content = get_graphql_content(response)
-    deleted = content["data"]["productClassRecommendationDelete"]["deleted"]
-    assert deleted == deleted_expect
+    data = content["data"]["productClassRecommendationDelete"]
+    product_class_id = data["productClassRecommendation"]["id"]
+    _, product_class_id = from_global_id(product_class_id)
+    assert product_class_id_expect == int(product_class_id)
 
 
 def test_product_class_delete_no_permission(

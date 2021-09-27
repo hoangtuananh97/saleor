@@ -1,19 +1,19 @@
 import graphene
 
-from saleor.graphql.tests.utils import get_graphql_content, assert_no_permission
+from saleor.graphql.tests.utils import assert_no_permission, get_graphql_content
 
 QUERY_LIST_PRODUCT_CLASS = """
-query GetProductsClassRecommendation(
-    $first: Int, $last: Int, $filter: ProductClassRecommendationFilterInput
-){
-    productsClassRecommendation(first: $first, last: $last, filter: $filter){
+query GetProductsClassRecommendation($first: Int, $last: Int, $filter: ProductClassRecommendationFilterInput){
+    productClassRecommendations(first: $first, last: $last, filter: $filter){
         edges {
             node {
                 id
                 productClassQty
+                status
                 createdBy{
                     id
                 }
+                createdAt
                 }
             }
             pageInfo{
@@ -42,7 +42,7 @@ def test_list_product_class(
 
     # then
     content = get_graphql_content(response)
-    product_class = content["data"]["productsClassRecommendation"]["edges"][0]["node"]
+    product_class = content["data"]["productClassRecommendations"]["edges"][0]["node"]
     _, product_class_id = graphene.Node.from_global_id(product_class["id"])
     assert int(product_class_id) == product_class_id_expect
 
@@ -56,7 +56,6 @@ def test_list_product_class_no_permission(
 
     # when
     response = staff_api_client.post_graphql(query, variables)
-
     # then
     assert_no_permission(response)
 
@@ -72,9 +71,7 @@ query GetProductClassRecommendation($id: ID!){
 
 
 def test_detail_product_class(
-        staff_api_client,
-        product_class_recommendation,
-        permission_manage_product_class
+        staff_api_client, product_class_recommendation, permission_manage_product_class
 ):
     # given
     product_class_id_expect = product_class_recommendation.id

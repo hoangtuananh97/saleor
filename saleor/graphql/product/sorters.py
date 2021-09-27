@@ -22,6 +22,7 @@ from ...product.models import (
     Product,
     ProductChannelListing,
 )
+from ...product_class import ProductClassRecommendationStatus
 from ..core.types import ChannelSortInputObjectType, SortInputObjectType
 
 
@@ -257,3 +258,27 @@ class ProductTypeSortingInput(SortInputObjectType):
     class Meta:
         sort_enum = ProductTypeSortField
         type_name = "product types"
+
+
+class ProductClassRecommendationSortField(graphene.Enum):
+    INFO = ["product_class_qty", "product_class_value", "product_class_recommendation"]
+    STATUS = ["status"]
+    DATETIME = ["created_at", "updated_at", "approved_at"]
+
+    @property
+    def description(self):
+        # pylint: disable=no-member
+        descriptions = {
+            ProductTypeSortField.INFO.name: "info",
+            ProductTypeSortField.STATUS.name: "status",
+            ProductTypeSortField.DATETIME.name: "datetime",
+        }
+        if self.name in descriptions:
+            return f"Sort products by {descriptions[self.name]}."
+        raise ValueError("Unsupported enum value: %s" % self.value)
+
+
+class ProductClassRecommendationSortingInput(SortInputObjectType):
+    class Meta:
+        sort_enum = ProductClassRecommendationSortField
+        type_name = "product class recommendation"

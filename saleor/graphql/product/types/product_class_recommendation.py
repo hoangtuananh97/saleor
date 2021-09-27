@@ -2,10 +2,10 @@ import graphene
 from graphene import relay
 from graphene_federation import key
 
-from .channels import ProductVariantChannelListing
+from ....product_class import models
 from ...account.types import User
 from ...core.connection import CountableDjangoObjectType
-from ....product_class import models
+from .channels import ProductVariantChannelListing
 
 
 @key(fields="id")
@@ -45,8 +45,6 @@ class ProductClassRecommendation(CountableDjangoObjectType):
     )
 
     class Meta:
-        description = (
-            "Represents a type of ProductClassRecommendation."
-        )
+        description = "Represents a type of ProductClassRecommendation."
         interfaces = [relay.Node]
         model = models.ProductClassRecommendation

@@ -38,11 +38,11 @@ from .bulk_mutations.products import (
 from .filters import (
     CategoryFilterInput,
     CollectionFilterInput,
-    ProductClassRecommendationFilterInput,
     ProductFilterInput,
     ProductTypeFilterInput,
     ProductVariantFilterInput,
 )
+from .filters_product_class import ProductClassRecommendationFilterInput
 from .mutations.attributes import (
     ProductAttributeAssign,
     ProductAttributeUnassign,
@@ -106,18 +106,19 @@ from .resolvers import (
     resolve_product_by_id,
     resolve_product_by_slug,
     resolve_product_class_recommendation,
+    resolve_product_class_recommendations,
     resolve_product_type_by_id,
     resolve_product_types,
     resolve_product_variant_by_sku,
     resolve_product_variants,
     resolve_products,
-    resolve_products_class_recommendation,
     resolve_report_product_sales,
     resolve_variant_by_id,
 )
 from .sorters import (
     CategorySortingInput,
     CollectionSortingInput,
+    ProductClassRecommendationSortingInput,
     ProductOrder,
     ProductTypeSortingInput,
 )
@@ -389,10 +390,13 @@ class ProductQueries(graphene.ObjectType):
 
 
 class ProductClassRecommendationQueries(graphene.ObjectType):
-    products_class_recommendation = FilterInputConnectionField(
+    product_class_recommendations = FilterInputConnectionField(
         ProductClassRecommendation,
         filter=ProductClassRecommendationFilterInput(
             description="Filtering options for product class recommendation."
+        ),
+        sort_by=ProductClassRecommendationSortingInput(
+            description="Sort product class recommendation."
         ),
         description="List product class recommendation.",
     )
@@ -406,8 +410,8 @@ class ProductClassRecommendationQueries(graphene.ObjectType):
     )
 
     @permission_required(ProductClassPermissions.MANAGE_PRODUCT_CLASS)
-    def resolve_products_class_recommendation(self, info, **kwargs):
-        return resolve_products_class_recommendation(info, **kwargs)
+    def resolve_product_class_recommendations(self, info, **kwargs):
+        return resolve_product_class_recommendations(info, **kwargs)
 
     @permission_required(ProductClassPermissions.MANAGE_PRODUCT_CLASS)
     def resolve_product_class_recommendation(self, info, **kwargs):

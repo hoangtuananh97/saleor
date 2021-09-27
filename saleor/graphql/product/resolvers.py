@@ -171,7 +171,7 @@ def resolve_report_product_sales(period, channel_slug) -> ChannelQsContext:
     return ChannelQsContext(qs=qs, channel_slug=channel_slug)
 
 
-def resolve_products_class_recommendation(_info, **_kwargs):
+def resolve_product_class_recommendations(_info, **_kwargs):
     return ProductClassRecommendation.objects.all()
 
 
