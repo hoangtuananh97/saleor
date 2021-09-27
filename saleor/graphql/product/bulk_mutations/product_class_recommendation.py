@@ -5,7 +5,7 @@ from saleor.core.tracing import traced_atomic_transaction
 from saleor.graphql.core.mutations import ModelMutation, ModelBulkDeleteMutation
 from saleor.graphql.core.types.common import ProductClassRecommendationError
 from saleor.graphql.product.mutations.product_class_recommendation import \
-    ProductClassRecommendationInput
+    ProductClassRecommendationInput, validate_product_class
 from saleor.graphql.product.types import ProductClassRecommendation
 from ....product_class import models
 
@@ -68,6 +68,7 @@ class ProductClassRecommendationBulkCreate(ModelMutation):
                 item,
                 input_cls=input_cls
             )
+            validate_product_class(cleaned_input)
             cleaned_input = cls.add_field(cleaned_input, user)
             instance = cls.construct_instance(instance, cleaned_input)
             cls.clean_instance(info, instance)
