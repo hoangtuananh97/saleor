@@ -10,17 +10,9 @@ from saleor.graphql.product.types import ProductClassRecommendation
 from ....product_class import models
 
 
-class ProductClassRecommendationBulkUpdateInput(graphene.InputObjectType):
+class ProductClassRecommendationBulkUpdateInput(ProductClassRecommendationInput):
     id = graphene.ID(
         description="ID of the product class recommendation.", required=True
-    )
-    listing = graphene.ID(
-        description="ID of the product variant channel listing.", required=True
-    )
-    product_class_qty = graphene.String(description="Product class qty")
-    product_class_value = graphene.String(description="Product class value")
-    product_class_recommendation = graphene.String(
-        description="Product class recommendation"
     )
 
 
