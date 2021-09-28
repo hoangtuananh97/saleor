@@ -2,6 +2,7 @@ import graphene
 
 from saleor.graphql.tests.utils import assert_no_permission, get_graphql_content
 from saleor.product_class.error_codes import ProductClassRecommendationErrorCode
+from saleor.product_class.models import ProductClassRecommendation
 
 QUERY_PRODUCT_CLASS_BULK_CREATE = """
 mutation ProductClassRecommendationBulkCreate($input: [ProductClassRecommendationInput!]!){
@@ -278,7 +279,9 @@ def test_product_class_bulk_delete(
     # then
     content = get_graphql_content(response)
     data = content["data"]["productClassRecommendationBulkDelete"]
+    objects = ProductClassRecommendation.objects.filter(id__in=product_class_ids)
     assert data["count"] == len(product_class_ids)
+    assert len(objects) == 0
 
 
 def test_product_class_bulk_delete_no_permission(
