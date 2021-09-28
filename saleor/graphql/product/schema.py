@@ -24,8 +24,9 @@ from ..translations.mutations import (
 )
 from ..utils import get_user_or_app_from_context
 from .bulk_mutations.product_class_recommendation import (
-    ProductClassRecommendationBulDelete,
+    ProductClassRecommendationBulkChangeStatus,
     ProductClassRecommendationBulkCreate,
+    ProductClassRecommendationBulkDelete,
     ProductClassRecommendationBulkUpdate,
 )
 from .bulk_mutations.products import (
@@ -67,6 +68,7 @@ from .mutations.digital_contents import (
     DigitalContentUrlCreate,
 )
 from .mutations.product_class_recommendation import (
+    ProductClassRecommendationChangeStatus,
     ProductClassRecommendationCreate,
     ProductClassRecommendationDelete,
     ProductClassRecommendationUpdate,
@@ -502,5 +504,11 @@ class ProductMutations(graphene.ObjectType):
         ProductClassRecommendationBulkUpdate.Field()
     )
     product_class_recommendation_bulk_delete = (
-        ProductClassRecommendationBulDelete.Field()
+        ProductClassRecommendationBulkDelete.Field()
+    )
+    product_class_recommendation_change_status = (
+        ProductClassRecommendationChangeStatus.Field()
+    )
+    product_class_recommendation_bulk_change_status = (
+        ProductClassRecommendationBulkChangeStatus.Field()
     )

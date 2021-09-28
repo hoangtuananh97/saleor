@@ -49,7 +49,6 @@ class ProductClassRecommendation(models.Model):
     approved_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        ordering = ("pk",)
         app_label = "product_class"
 
         permissions = (
