@@ -9,8 +9,6 @@ from saleor.graphql.core.mutations import (
     ModelMutation,
 )
 from saleor.graphql.core.types.common import ProductClassRecommendationError
-from saleor.graphql.core.utils import from_global_id_or_error
-from saleor.graphql.product.enums import ProductClassRecommendationEnum
 from saleor.graphql.product.types.product_class_recommendation import (
     ProductClassRecommendation,
 )

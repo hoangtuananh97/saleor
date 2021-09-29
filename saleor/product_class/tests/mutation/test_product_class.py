@@ -110,7 +110,9 @@ def test_product_class_create_no_permission(
 
 
 QUERY_PRODUCT_CLASS_UPDATE = """
-mutation ProductClassRecommendationUpdate($id: ID!, $input: ProductClassRecommendationInput!){
+mutation ProductClassRecommendationUpdate(
+    $id: ID!, $input: ProductClassRecommendationInput!
+    ){
     productClassRecommendationUpdate(id: $id, input: $input){
         productClassRecommendation{
             id

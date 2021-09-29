@@ -131,6 +131,7 @@ PUBLIC_META_PERMISSION_MAP = {
     "User": public_user_permissions,
     "Voucher": discount_permissions,
     "Warehouse": product_permissions,
+    "ProductVariantChannelListing": product_permissions,
 }
 
 
@@ -158,4 +159,5 @@ PRIVATE_META_PERMISSION_MAP = {
     "User": private_user_permissions,
     "Voucher": discount_permissions,
     "Warehouse": product_permissions,
+    "ProductVariantChannelListing": product_permissions,
 }

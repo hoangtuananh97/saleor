@@ -621,7 +621,7 @@ class ProductVariantTranslation(Translation):
         return {"name": self.name}
 
 
-class ProductVariantChannelListing(models.Model):
+class ProductVariantChannelListing(ModelWithMetadata):
     variant = models.ForeignKey(
         ProductVariant,
         null=False,
@@ -653,9 +653,13 @@ class ProductVariantChannelListing(models.Model):
     )
     cost_price = MoneyField(amount_field="cost_price_amount", currency_field="currency")
 
-    class Meta:
+    class Meta(ModelWithMetadata.Meta):
         unique_together = [["variant", "channel"]]
         ordering = ("pk",)
+        indexes = [
+            GinIndex(fields=["private_metadata"], name="variantchannels_p_meta_idx"),
+            GinIndex(fields=["metadata"], name="variantchannels_meta_idx"),
+        ]
 
 
 class DigitalContent(ModelWithMetadata):

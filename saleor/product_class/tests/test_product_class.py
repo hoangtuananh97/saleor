@@ -3,7 +3,9 @@ import graphene
 from saleor.graphql.tests.utils import assert_no_permission, get_graphql_content
 
 QUERY_LIST_PRODUCT_CLASS = """
-query GetProductsClassRecommendation($first: Int, $last: Int, $filter: ProductClassRecommendationFilterInput){
+query GetProductsClassRecommendation($first: Int, $last: Int,
+    $filter: ProductClassRecommendationFilterInput
+    ){
     productClassRecommendations(first: $first, last: $last, filter: $filter){
         edges {
             node {

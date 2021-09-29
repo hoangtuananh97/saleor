@@ -18,6 +18,7 @@ from ...channel.dataloaders import ChannelByIdLoader
 from ...core.connection import CountableDjangoObjectType
 from ...decorators import permission_required
 from ...discount.dataloaders import DiscountsByDateTimeLoader
+from ...meta.types import ObjectWithMetadata
 from ..dataloaders import (
     CollectionsByProductIdLoader,
     ProductByIdLoader,
@@ -241,7 +242,7 @@ class ProductVariantChannelListing(CountableDjangoObjectType):
     class Meta:
         description = "Represents product varaint channel listing."
         model = models.ProductVariantChannelListing
-        interfaces = [graphene.relay.Node]
+        interfaces = [graphene.relay.Node, ObjectWithMetadata]
         only_fields = ["id", "channel", "price", "cost_price"]
 
     @staticmethod

@@ -5,20 +5,22 @@ from saleor.product_class.error_codes import ProductClassRecommendationErrorCode
 from saleor.product_class.models import ProductClassRecommendation
 
 QUERY_PRODUCT_CLASS_BULK_CREATE = """
-mutation ProductClassRecommendationBulkCreate($input: [ProductClassRecommendationInput!]!){
-    productClassRecommendationBulkCreate(input: $input){
-        count
-        productClassRecommendations{
-            id
-            productClassQty
-            productClassValue
-            productClassRecommendation
-            status
+mutation ProductClassRecommendationBulkCreate(
+    $input: [ProductClassRecommendationInput!]!
+    ){
+        productClassRecommendationBulkCreate(input: $input){
+            count
+            productClassRecommendations{
+                id
+                productClassQty
+                productClassValue
+                productClassRecommendation
+                status
+            }
+            errors{
+                code
+            }
         }
-        errors{
-            code
-        }
-    }
 }
 """
 
@@ -110,7 +112,9 @@ def test_product_class_bulk_create_no_permission(
 
 
 QUERY_PRODUCT_CLASS_BULK_UPDATE = """
-mutation ProductClassRecommendationBulkUpdate($input: [ProductClassRecommendationBulkUpdateInput!]!){
+mutation ProductClassRecommendationBulkUpdate(
+    $input: [ProductClassRecommendationBulkUpdateInput!]!
+    ){
     productClassRecommendationBulkUpdate(input: $input){
         count
         productClassRecommendations{

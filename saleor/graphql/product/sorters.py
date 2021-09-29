@@ -22,7 +22,6 @@ from ...product.models import (
     Product,
     ProductChannelListing,
 )
-from ...product_class import ProductClassRecommendationStatus
 from ..core.types import ChannelSortInputObjectType, SortInputObjectType
 
 

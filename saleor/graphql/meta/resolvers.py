@@ -59,6 +59,8 @@ def resolve_object_with_metadata_type(instance: ModelWithMetadata):
         warehouse_models.Warehouse: warehouse_types.Warehouse,
         discount_models.Sale: discount_types.Sale,
         discount_models.Voucher: discount_types.Voucher,
+        product_models.ProductVariantChannelListing: product_types.ProductVariantChannelListing,
+        # NOQA
     }
     return MODEL_TO_TYPE_MAP.get(instance.__class__, None)
 
