@@ -4702,6 +4702,11 @@ def permission_manage_product_class():
 
 
 @pytest.fixture
+def permission_approve_product_class():
+    return Permission.objects.get(codename="approve_product_class")
+
+
+@pytest.fixture
 def product_class_recommendation(db, staff_user, channel_variant):
     return ProductClassRecommendation.objects.create(
         listing_id=channel_variant.id,

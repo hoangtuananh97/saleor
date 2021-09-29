@@ -1,5 +1,9 @@
+import datetime
+
 import graphene
 from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.forms.models import model_to_dict
 
 from saleor.core.permissions import ProductClassPermissions
 from saleor.core.tracing import traced_atomic_transaction
@@ -14,8 +18,11 @@ from saleor.graphql.product.types.product_class_recommendation import (
 )
 from saleor.product_class import ProductClassRecommendationStatus
 
+from ....core.exceptions import PermissionDenied
+from ....product.models import ProductVariantChannelListing
 from ....product_class import models
 from ....product_class.error_codes import ProductClassRecommendationErrorCode
+from ..utils import insert_into_dict
 
 
 class ProductClassRecommendationInput(graphene.InputObjectType):
@@ -60,6 +67,14 @@ class ProductClassRecommendationMixin:
 class ProductClassRecommendationChangeStatusMixin:
     class Meta:
         abstract = True
+
+    @classmethod
+    def check_permission_change_status(cls, info, status):
+        if status == ProductClassRecommendationStatus.APPROVED:
+            approved_permission = (ProductClassPermissions.APPROVE_PRODUCT_CLASS,)
+            if not BaseMutation.check_permissions(info.context, approved_permission):
+                raise PermissionDenied()
+        return True
 
     @classmethod
     def validate(cls, cleaned_input):
@@ -191,12 +206,41 @@ class ProductClassRecommendationChangeStatus(
     def perform_mutation(cls, _root, info, **data):
         pk = data.get("id")
         status = data.get("status")
+        user = info.context.user
         cls.validate(data)
+        cls.check_permission_change_status(info, status)
         product_class = cls.get_node_or_error(
             info, pk, only_type=ProductClassRecommendation
         )
+        previous_product_class = product_class
         product_class.status = status
+        product_class.updated_by_id = user.id
+
+        if status == ProductClassRecommendationStatus.APPROVED:
+            product_class.approved_by_id = user.id
+            product_class.approved_at = datetime.datetime.now()
+
         product_class.save()
+        transaction.on_commit(lambda: update_metadata(previous_product_class))
         return ProductClassRecommendationChangeStatus(
             product_class_recommendation=product_class
         )
+
+
+@traced_atomic_transaction()
+def update_metadata(previous_product_class):
+    current_product_class = models.ProductClassRecommendation.objects.filter(
+        id=previous_product_class.id
+    ).first()
+    listing = ProductVariantChannelListing.objects.filter(
+        id=previous_product_class.listing_id
+    ).first()
+    metadata = listing.metadata
+    key = previous_product_class.id
+    value = {
+        "current": model_to_dict(current_product_class),
+        "previous": model_to_dict(previous_product_class),
+    }
+    obj_metadata = insert_into_dict(metadata, key, value)
+    listing.metadata = obj_metadata
+    listing.save()

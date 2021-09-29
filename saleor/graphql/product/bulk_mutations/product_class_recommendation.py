@@ -183,6 +183,11 @@ class ProductClassRecommendationBulkChangeStatus(
         error_type_field = "product_class_recommendation_errors"
 
     @classmethod
+    def clean_instance(cls, info, instance):
+        status = info.variable_values["status"]
+        cls.check_permission_change_status(info, status)
+
+    @classmethod
     @traced_atomic_transaction()
     def bulk_action(cls, info, queryset, **data):
         status = data.get("status")

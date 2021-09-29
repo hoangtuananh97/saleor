@@ -4,6 +4,7 @@ from graphql_relay import from_global_id
 from saleor.graphql.tests.utils import assert_no_permission, get_graphql_content
 from saleor.product_class.error_codes import ProductClassRecommendationErrorCode
 from saleor.product_class.models import ProductClassRecommendation
+from saleor.tests.fixtures import permission_approve_product_class
 
 QUERY_PRODUCT_CLASS_CREATE = """
 mutation ProductClassRecommendationCreate($input: ProductClassRecommendationInput!){
@@ -314,7 +315,7 @@ mutation ProductClassRecommendationChangeStatus($id: ID!, $status: String!){
 """
 
 
-def test_product_class_change_status(
+def test_product_class_change_status_draft_submit(
         staff_api_client, product_class_recommendation, permission_manage_product_class
 ):
     # give
@@ -341,6 +342,34 @@ def test_product_class_change_status(
     assert int(product_class_id) == product_class_id_expect
 
 
+def test_product_class_change_status_approve(
+        staff_api_client, product_class_recommendation, permission_manage_product_class
+):
+    # give
+    product_class_id_expect = product_class_recommendation.id
+    product_class_id = graphene.Node.to_global_id(
+        "ProductClassRecommendation", product_class_recommendation.id
+    )
+    query = QUERY_PRODUCT_CLASS_CHANGE_STATUS
+    variables = {"id": product_class_id, "status": "APPROVED"}
+
+    # when
+    response = staff_api_client.post_graphql(
+        query,
+        variables,
+        permissions=[permission_manage_product_class, permission_approve_product_class],
+    )
+
+    # then
+    content = get_graphql_content(response)
+    data = content["data"]["productClassRecommendationChangeStatus"]
+    product_class = data["productClassRecommendation"]
+    product_class_id = product_class["id"]
+    _, product_class_id = graphene.Node.from_global_id(product_class_id)
+    assert product_class["status"] == "DRAFT"
+    assert int(product_class_id) == product_class_id_expect
+
+
 def test_product_class_change_status_errors(
         staff_api_client, product_class_recommendation, permission_manage_product_class
 ):
@@ -358,7 +387,6 @@ def test_product_class_change_status_errors(
 
     # then
     content = get_graphql_content(response)
-    product_class_recommendation.refresh_from_db()
     data = content["data"]["productClassRecommendationChangeStatus"]
     code = data["errors"][0]["code"]
     assert code == str.upper(ProductClassRecommendationErrorCode.INVALID.value)
@@ -377,6 +405,25 @@ def test_product_class_change_status_no_permission(
 
     # when
     response = staff_api_client.post_graphql(query, variables)
+
+    # then
+    assert_no_permission(response)
+
+
+def test_product_class_change_status_approved_no_permission(
+        staff_api_client, product_class_recommendation, permission_manage_product_class
+):
+    # give
+    product_class_id = graphene.Node.to_global_id(
+        "ProductClassRecommendation", product_class_recommendation.id
+    )
+    query = QUERY_PRODUCT_CLASS_CHANGE_STATUS
+    variables = {"id": product_class_id, "status": "APPROVED"}
+
+    # when
+    response = staff_api_client.post_graphql(
+        query, variables, permissions=[permission_manage_product_class]
+    )
 
     # then
     assert_no_permission(response)

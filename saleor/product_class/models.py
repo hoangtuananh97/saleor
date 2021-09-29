@@ -56,4 +56,8 @@ class ProductClassRecommendation(models.Model):
                 ProductClassPermissions.MANAGE_PRODUCT_CLASS.codename,
                 "Manage product class recommendation.",
             ),
+            (
+                ProductClassPermissions.APPROVE_PRODUCT_CLASS.codename,
+                "Approve product class recommendation.",
+            ),
         )

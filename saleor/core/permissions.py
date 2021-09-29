@@ -78,6 +78,7 @@ class SitePermissions(BasePermissionEnum):
 
 class ProductClassPermissions(BasePermissionEnum):
     MANAGE_PRODUCT_CLASS = "product_class.manage_product_class"
+    APPROVE_PRODUCT_CLASS = "product_class.approve_product_class"
 
 
 PERMISSIONS_ENUMS = [

@@ -3,6 +3,7 @@ import graphene
 from saleor.graphql.tests.utils import assert_no_permission, get_graphql_content
 from saleor.product_class.error_codes import ProductClassRecommendationErrorCode
 from saleor.product_class.models import ProductClassRecommendation
+from saleor.tests.fixtures import permission_approve_product_class
 
 QUERY_PRODUCT_CLASS_BULK_CREATE = """
 mutation ProductClassRecommendationBulkCreate(
@@ -318,14 +319,20 @@ mutation ProductClassRecommendationBulkChangeStatus($ids: [ID!]!, $status: Strin
 """
 
 
-def test_product_class_bulk_change_status(
+def test_product_class_bulk_change_status_draft_submit(
         staff_api_client,
         channel_variant,
         product_class_recommendation,
         permission_manage_product_class,
 ):
     # give
-    variables = {"ids": ["abcabcabc"], "status": "DRAFT"}
+    product_class_id_expect = product_class_recommendation.id
+
+    product_class_id = graphene.Node.to_global_id(
+        "ProductClassRecommendation", product_class_id_expect
+    )
+    product_class_ids = [product_class_id]
+    variables = {"ids": product_class_ids, "status": "DRAFT"}
     query = QUERY_PRODUCT_CLASS_BULK_CHANGE_STATUS
 
     # when
@@ -338,7 +345,38 @@ def test_product_class_bulk_change_status(
     product_class_recommendation.refresh_from_db()
     data = content["data"]["productClassRecommendationBulkChangeStatus"]
 
-    assert data["count"] == 0
+    assert data["count"] == len(product_class_ids)
+
+
+def test_product_class_bulk_change_status_approve(
+        staff_api_client,
+        channel_variant,
+        product_class_recommendation,
+        permission_manage_product_class,
+):
+    # give
+    product_class_id_expect = product_class_recommendation.id
+
+    product_class_id = graphene.Node.to_global_id(
+        "ProductClassRecommendation", product_class_id_expect
+    )
+    product_class_ids = [product_class_id]
+    variables = {"ids": product_class_ids, "status": "APPROVE"}
+    query = QUERY_PRODUCT_CLASS_BULK_CHANGE_STATUS
+
+    # when
+    response = staff_api_client.post_graphql(
+        query,
+        variables,
+        permissions=[permission_manage_product_class, permission_approve_product_class],
+    )
+
+    # then
+    content = get_graphql_content(response)
+    product_class_recommendation.refresh_from_db()
+    data = content["data"]["productClassRecommendationBulkChangeStatus"]
+
+    assert data["count"] == len(product_class_ids)
 
 
 def test_product_class_bulk_change_status_errors(
@@ -364,7 +402,6 @@ def test_product_class_bulk_change_status_errors(
 
     # then
     content = get_graphql_content(response)
-    product_class_recommendation.refresh_from_db()
     data = content["data"]["productClassRecommendationBulkChangeStatus"]
     code = data["errors"][0]["code"]
 
@@ -388,6 +425,31 @@ def test_product_class_bulk_change_status_no_permission(
 
     # when
     response = staff_api_client.post_graphql(query, variables)
+
+    # then
+    assert_no_permission(response)
+
+
+def test_product_class_bulk_change_status_approve_no_permission(
+        staff_api_client,
+        channel_variant,
+        product_class_recommendation,
+        permission_manage_product_class,
+):
+    # give
+    product_class_id_expect = product_class_recommendation.id
+
+    product_class_id = graphene.Node.to_global_id(
+        "ProductClassRecommendation", product_class_id_expect
+    )
+    product_class_ids = [product_class_id]
+    variables = {"ids": product_class_ids, "status": "APPROVE"}
+    query = QUERY_PRODUCT_CLASS_BULK_CHANGE_STATUS
+
+    # when
+    response = staff_api_client.post_graphql(
+        query, variables, permissions=[permission_manage_product_class]
+    )
 
     # then
     assert_no_permission(response)
