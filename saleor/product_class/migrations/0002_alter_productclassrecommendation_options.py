@@ -5,13 +5,16 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('product_class', '0001_initial'),
+        ("product_class", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='productclassrecommendation',
-            options={'permissions': (
-            ('manage_product_class', 'Manage product class recommendation.'),)},
+            name="productclassrecommendation",
+            options={
+                "permissions": (
+                    ("manage_product_class", "Manage product class recommendation."),
+                )
+            },
         ),
     ]

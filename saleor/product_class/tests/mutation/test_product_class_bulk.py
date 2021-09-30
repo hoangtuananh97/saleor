@@ -344,7 +344,9 @@ def test_product_class_bulk_change_status_draft_submit(
     content = get_graphql_content(response)
     product_class_recommendation.refresh_from_db()
     data = content["data"]["productClassRecommendationBulkChangeStatus"]
+    product_class = ProductClassRecommendation.objects.filter(id__in=product_class_ids)
 
+    assert product_class.first().status == "DRAFT"
     assert data["count"] == len(product_class_ids)
 
 
@@ -375,7 +377,9 @@ def test_product_class_bulk_change_status_approve(
     content = get_graphql_content(response)
     product_class_recommendation.refresh_from_db()
     data = content["data"]["productClassRecommendationBulkChangeStatus"]
+    product_class = ProductClassRecommendation.objects.filter(id__in=product_class_ids)
 
+    assert product_class.first().status == "APPROVE"
     assert data["count"] == len(product_class_ids)
 
 

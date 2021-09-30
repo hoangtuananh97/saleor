@@ -366,7 +366,7 @@ def test_product_class_change_status_approve(
     product_class = data["productClassRecommendation"]
     product_class_id = product_class["id"]
     _, product_class_id = graphene.Node.from_global_id(product_class_id)
-    assert product_class["status"] == "DRAFT"
+    assert product_class["status"] == "APPROVED"
     assert int(product_class_id) == product_class_id_expect
 
 

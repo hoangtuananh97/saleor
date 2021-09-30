@@ -4707,7 +4707,7 @@ def permission_approve_product_class():
 
 
 @pytest.fixture
-def product_class_recommendation(db, staff_user, channel_variant):
+def product_class_recommendation(db, staff_user, channel_variant_metadata):
     return ProductClassRecommendation.objects.create(
         listing_id=channel_variant.id,
         product_class_qty="product_class_qty",
@@ -4740,3 +4740,18 @@ def product_class_recommendations(db, staff_user, channel_variant):
             ),
         ]
     )
+
+
+@pytest.fixture
+def channel_variant_metadata(product, channel_USD) -> ProductVariantChannelListing:
+    product_variant = ProductVariant.objects.create(product=product, sku="SKU_A")
+    listing = ProductVariantChannelListing.objects.create(
+        variant=product_variant,
+        channel=channel_USD,
+        price_amount=Decimal(10),
+        cost_price_amount=Decimal(1),
+        currency=channel_USD.currency_code,
+        metadata={"current": {"key_A": "value_A"}},
+        private_metadata={"private_key": "private_value"},
+    )
+    return listing

@@ -105,11 +105,3 @@ def get_draft_order_lines_data_for_variants(
         order_pks.add(line.order_id)
 
     return DraftOrderLinesData(order_to_lines_mapping, line_pks, order_pks)
-
-
-def insert_into_dict(data, key, value):
-    if key not in data:
-        data[key] = value
-    else:
-        data[key].append(value)
-    return data

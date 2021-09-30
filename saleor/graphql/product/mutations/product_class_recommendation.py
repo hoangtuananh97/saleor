@@ -1,9 +1,8 @@
-import datetime
-
 import graphene
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.forms.models import model_to_dict
+from django.utils import timezone
 
 from saleor.core.permissions import ProductClassPermissions
 from saleor.core.tracing import traced_atomic_transaction
@@ -22,7 +21,7 @@ from ....core.exceptions import PermissionDenied
 from ....product.models import ProductVariantChannelListing
 from ....product_class import models
 from ....product_class.error_codes import ProductClassRecommendationErrorCode
-from ..utils import insert_into_dict
+from ..enums import ProductClassRecommendationEnum
 
 
 class ProductClassRecommendationInput(graphene.InputObjectType):
@@ -57,7 +56,7 @@ class ProductClassRecommendationMixin:
             raise ValidationError(
                 {
                     "product_class": ValidationError(
-                        "Product class qty is required",
+                        "Product class value is required",
                         code=ProductClassRecommendationErrorCode.REQUIRED.value,
                     )
                 }
@@ -189,7 +188,7 @@ class ProductClassRecommendationChangeStatus(
         id = graphene.ID(
             required=True, description="Id to update a product class recommendation."
         )
-        status = graphene.String(
+        status = ProductClassRecommendationEnum(
             required=True,
             description="Fields required to update status a product class.",
         )
@@ -212,35 +211,33 @@ class ProductClassRecommendationChangeStatus(
         product_class = cls.get_node_or_error(
             info, pk, only_type=ProductClassRecommendation
         )
-        previous_product_class = product_class
         product_class.status = status
         product_class.updated_by_id = user.id
 
         if status == ProductClassRecommendationStatus.APPROVED:
             product_class.approved_by_id = user.id
-            product_class.approved_at = datetime.datetime.now()
+            product_class.approved_at = timezone.datetime.now()
 
         product_class.save()
-        transaction.on_commit(lambda: update_metadata(previous_product_class))
+        transaction.on_commit(lambda: update_metadata(product_class))
         return ProductClassRecommendationChangeStatus(
             product_class_recommendation=product_class
         )
 
 
 @traced_atomic_transaction()
-def update_metadata(previous_product_class):
-    current_product_class = models.ProductClassRecommendation.objects.filter(
-        id=previous_product_class.id
-    ).first()
-    listing = ProductVariantChannelListing.objects.filter(
-        id=previous_product_class.listing_id
-    ).first()
-    metadata = listing.metadata
-    key = previous_product_class.id
-    value = {
-        "current": model_to_dict(current_product_class),
-        "previous": model_to_dict(previous_product_class),
+def update_metadata(product_class):
+    listing_id = product_class.listing_id
+    listing = ProductVariantChannelListing.objects.filter(id=listing_id).first()
+    product_classes_approved = models.ProductClassRecommendation.objects.filter(
+        listing_id=listing_id
+    ).order_by("approved_at")
+    product_classes_approved = product_classes_approved[:2]
+
+    obj_metadata = {
+        "current": model_to_dict(product_classes_approved[0]),
     }
-    obj_metadata = insert_into_dict(metadata, key, value)
-    listing.metadata = obj_metadata
+    if product_classes_approved.__len__() > 1:
+        obj_metadata["previous"] = model_to_dict(product_classes_approved[1])
+    listing.store_value_in_metadata(obj_metadata)
     listing.save()

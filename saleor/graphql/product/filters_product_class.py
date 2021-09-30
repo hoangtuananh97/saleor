@@ -5,62 +5,25 @@ import graphene
 from django.db.models import Q
 from graphene_django.filter import GlobalIDMultipleChoiceFilter
 
-from ...channel.models import Channel
-from ...product.models import Product, ProductVariant, ProductVariantChannelListing
+from ...product.models import ProductVariantChannelListing
 from ...product_class import ProductClassRecommendationStatus
 from ...product_class.models import ProductClassRecommendation
-from ..attribute.types import AttributeInput
 from ..core.filters import (
     MetadataFilter,
     ObjectTypeFilter,
     filter_created_at,
-    filter_metadata,
     filter_updated_at,
 )
 from ..core.types import FilterInputObjectType
 from ..core.types.common import DateTimeRangeInput
-from ..utils.filters import filter_fields_containing_value, filter_range_field
-from .filters import ProductFilter, ProductVariantFilter
+from ..utils.filters import filter_range_field
+from .filters_relation_product_class import (
+    ChannelListingChannelFilterInput,
+    ChannelListingProductVariantFilterInput,
+    filter_channel_listing,
+)
 
 T_PRODUCT_FILTER_QUERIES = Dict[int, Iterable[int]]
-
-
-class ChannelListingProductVariantFilter(ProductVariantFilter):
-    ids = GlobalIDMultipleChoiceFilter(field_name="id")
-
-
-class FilterFieldChannelListing:
-    def filter_channel(self, qs, _, channel):
-        qs_channel = Channel.objects.values_list("id", flat=True)
-        qs_channel = ChannelListingChannelFilter(data=channel, queryset=qs_channel).qs
-        qs = qs.filter(listing__channel_id__in=qs_channel)
-        return qs
-
-    def filter_metadata(self, qs, _, metadata):
-        qs_listing = ProductVariantChannelListing.objects.values_list("id", flat=True)
-        qs_listing = filter_metadata(qs_listing, _, metadata)
-        qs = qs.filter(listing_id__in=qs_listing)
-        return qs
-
-    def filter_variant(self, qs, _, variant):
-        product = variant.get("product")
-        qs_variant = ProductVariant.objects.values_list("id", flat=True)
-        qs_variant = ChannelListingProductVariantFilter(
-            data=variant, queryset=qs_variant
-        ).qs
-        if product:
-            qs_variant = self.filter_product_by_variant(qs_variant, _, product)
-        qs = qs.filter(listing__variant_id__in=qs_variant)
-        return qs
-
-    def filter_product_by_variant(self, qs_variant, _, product):
-        qs_product = Product.objects.values_list("id", flat=True)
-        qs_product = ProductFilter(data=product, queryset=qs_product).qs
-        qs_variant = qs_variant.filter(product_id__in=qs_product)
-        return qs_variant
-
-
-filter_channel_listing = FilterFieldChannelListing()
 
 
 def filter_approved_at(qs, _, value):
@@ -87,39 +50,6 @@ def filter_product_class_status(qs, _, value):
     return qs
 
 
-class ChannelListingProductFilterInput(graphene.InputObjectType):
-    metadata = graphene.List(
-        MetadataFilter, required=False, description="Filter variant metadata."
-    )
-    ids = graphene.List(
-        graphene.NonNull(graphene.ID), required=False, description="Filter product ids."
-    )
-    search = graphene.String(required=False, description="Filter name or slug product.")
-    attributes = graphene.List(
-        AttributeInput, required=False, description="Filter attributes of product."
-    )
-
-
-class ChannelListingProductVariantFilterInput(graphene.InputObjectType):
-    metadata = graphene.List(
-        MetadataFilter, required=False, description="Filter variant metadata."
-    )
-    ids = graphene.List(
-        graphene.NonNull(graphene.ID), required=False, description="Filter variant ids."
-    )
-    search = graphene.String(required=False, description="Filter name or slug variant.")
-    product = graphene.Field(
-        ChannelListingProductFilterInput, required=False, description="Filter variant."
-    )
-
-
-class ChannelListingChannelFilterInput(graphene.InputObjectType):
-    ids = graphene.List(
-        graphene.NonNull(graphene.ID), required=False, description="Filter channel ids."
-    )
-    search = graphene.String(required=False, description="Filter name or slug channel.")
-
-
 class ChannelListingFilterInput(graphene.InputObjectType):
     metadata = graphene.List(
         MetadataFilter, required=False, description="Filter listing metadata."
@@ -137,18 +67,6 @@ class ChannelListingFilterInput(graphene.InputObjectType):
     channel = graphene.Field(
         ChannelListingChannelFilterInput, required=False, description="Filter channel"
     )
-
-
-class ChannelListingChannelFilter(django_filters.FilterSet):
-    search = ObjectTypeFilter(
-        input_class=ChannelListingChannelFilterInput,
-        method=filter_fields_containing_value("name", "slug"),
-    )
-    ids = GlobalIDMultipleChoiceFilter(field_name="id")
-
-    class Meta:
-        model = Channel
-        fields = ["search", "ids"]
 
 
 class ChannelListingFilter(django_filters.FilterSet):

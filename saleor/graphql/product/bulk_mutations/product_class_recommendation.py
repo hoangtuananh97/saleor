@@ -1,4 +1,7 @@
 import graphene
+from django.db import transaction
+from django.forms.models import model_to_dict
+from django.utils import timezone
 
 from saleor.core.permissions import ProductClassPermissions
 from saleor.core.tracing import traced_atomic_transaction
@@ -15,7 +18,8 @@ from saleor.graphql.product.mutations.product_class_recommendation import (
 )
 from saleor.graphql.product.types import ProductClassRecommendation
 
-from ....product_class import models
+from ....product_class import ProductClassRecommendationStatus, models
+from ..enums import ProductClassRecommendationEnum
 
 
 class ProductClassRecommendationBulkUpdateInput(ProductClassRecommendationInput):
@@ -52,7 +56,6 @@ class BaseProductClassRecommendationBulk(
 
     @classmethod
     def validate(cls, _root, info, **data):
-        cleaned_inputs = []
         instances = []
         data = data.get("input")
         input_cls = cls.config_input_cls()
@@ -64,7 +67,6 @@ class BaseProductClassRecommendationBulk(
             cleaned_input = cls.add_field(cleaned_input, user)
             instance = cls.construct_instance(instance, cleaned_input)
             cls.clean_instance(info, instance)
-            cleaned_inputs.append(cleaned_input)
             instances.append(instance)
         return instances
 
@@ -131,6 +133,8 @@ class ProductClassRecommendationBulkUpdate(BaseProductClassRecommendationBulk):
     @traced_atomic_transaction()
     def perform_mutation(cls, _root, info, **data):
         instances = cls.validate(_root, info, **data)
+        for instance in instances:
+            instance.updated_at = timezone.datetime.now()
         models.ProductClassRecommendation.objects.bulk_update(
             instances,
             [
@@ -170,7 +174,7 @@ class ProductClassRecommendationBulkChangeStatus(
             required=True,
             description="Ids of product class to update status.",
         )
-        status = graphene.String(
+        status = ProductClassRecommendationEnum(
             required=True,
             description="Status of product class to update status.",
         )
@@ -192,4 +196,48 @@ class ProductClassRecommendationBulkChangeStatus(
     def bulk_action(cls, info, queryset, **data):
         status = data.get("status")
         cls.validate(data)
-        queryset.update(status=status)
+        user = info.context.user
+        obj_update = {
+            "updated_by_id": user.id,
+            "status": status,
+            "updated_at": timezone.datetime.now(),
+        }
+        if status == ProductClassRecommendationStatus.APPROVED:
+            obj_update["approved_by_id"] = user.id
+            obj_update["approved_at"] = timezone.datetime.now()
+        queryset.update(**obj_update)
+
+        ids = queryset.values_list("id", flat=True)
+        save_bulk_metadata(ids)
+
+
+def save_bulk_metadata(ids):
+    listing_ids = []
+    group_data_by_listing = {}
+    # get new values
+    product_classes = models.ProductClassRecommendation.objects.filter(id__in=ids)
+    product_classes = product_classes.order_by("approved_at")
+    # because loop order by approved_at => only get 2 value in dict
+    for item in product_classes:
+        if item.listing_id not in group_data_by_listing.keys():
+            listing_ids.append(item.listing_id)
+            group_data_by_listing[item.listing_id] = [model_to_dict(item)]
+        else:
+            value = group_data_by_listing[item.listing_id]
+            if value.__len__() == 2:
+                continue
+            group_data_by_listing[item.listing_id].append(model_to_dict(item))
+
+    # TODO: (issue performance) Update many value different with many id different
+    with transaction.atomic():
+        for key, values in group_data_by_listing.items():
+            obj_metadata = {
+                "current": values[0],
+            }
+            if values.__len__() > 1:
+                obj_metadata["previous"] = values[1]
+
+            listing = models.ProductVariantChannelListing.objects.get(id=key)
+            listing.store_value_in_metadata(obj_metadata)
+            listing.save()
+    return True

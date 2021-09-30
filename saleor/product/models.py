@@ -653,7 +653,7 @@ class ProductVariantChannelListing(ModelWithMetadata):
     )
     cost_price = MoneyField(amount_field="cost_price_amount", currency_field="currency")
 
-    class Meta(ModelWithMetadata.Meta):
+    class Meta:
         unique_together = [["variant", "channel"]]
         ordering = ("pk",)
         indexes = [
