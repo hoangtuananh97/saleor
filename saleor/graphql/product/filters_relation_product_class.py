@@ -5,23 +5,22 @@ from graphene_django.filter import GlobalIDMultipleChoiceFilter
 
 from saleor.channel.models import Channel
 from saleor.graphql.attribute.types import AttributeInput
-from saleor.graphql.core.filters import MetadataFilter, \
-    ObjectTypeFilter
+from saleor.graphql.core.filters import MetadataFilter, ObjectTypeFilter
 from saleor.graphql.product.filters import ProductFilter, ProductVariantFilter
 from saleor.graphql.utils.filters import filter_fields_containing_value
-from saleor.product.models import ProductVariant, Product, ProductVariantChannelListing
+from saleor.product.models import Product, ProductVariant, ProductVariantChannelListing
 
 
 def filter_metadata(qs, _, value):
     for metadata_item in value:
         if metadata_item.value:
             qs = qs.filter(
-                Q(metadata__current__contains={
-                    metadata_item.key: metadata_item.value
-                })
-                | Q(metadata__previous__contains={
-                    metadata_item.key: metadata_item.value
-                })
+                Q(metadata__current__contains={metadata_item.key: metadata_item.value})
+                | Q(
+                    metadata__previous__contains={
+                        metadata_item.key: metadata_item.value
+                    }
+                )
             )
         else:
             qs = qs.filter(

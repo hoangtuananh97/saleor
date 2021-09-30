@@ -27,7 +27,7 @@ mutation ProductClassRecommendationBulkCreate(
 
 
 def test_product_class_bulk_create(
-        staff_api_client, channel_variant, permission_manage_product_class
+    staff_api_client, channel_variant, permission_manage_product_class
 ):
     # give
     listing_id_expect = channel_variant.id
@@ -58,7 +58,7 @@ def test_product_class_bulk_create(
 
 
 def test_product_class_bulk_create_errors(
-        staff_api_client, channel_variant, permission_manage_product_class
+    staff_api_client, channel_variant, permission_manage_product_class
 ):
     # give
     listing_id_expect = channel_variant.id
@@ -90,7 +90,7 @@ def test_product_class_bulk_create_errors(
 
 
 def test_product_class_bulk_create_no_permission(
-        staff_api_client, channel_variant, product_class_recommendation
+    staff_api_client, channel_variant, product_class_recommendation
 ):
     # give
     listing_id_expect = channel_variant.id
@@ -134,10 +134,10 @@ mutation ProductClassRecommendationBulkUpdate(
 
 
 def test_product_class_bulk_update(
-        staff_api_client,
-        channel_variant,
-        product_class_recommendation,
-        permission_manage_product_class,
+    staff_api_client,
+    channel_variant,
+    product_class_recommendation,
+    permission_manage_product_class,
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -180,10 +180,10 @@ def test_product_class_bulk_update(
 
 
 def test_product_class_bulk_update_errors(
-        staff_api_client,
-        channel_variant,
-        product_class_recommendation,
-        permission_manage_product_class,
+    staff_api_client,
+    channel_variant,
+    product_class_recommendation,
+    permission_manage_product_class,
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -222,10 +222,10 @@ def test_product_class_bulk_update_errors(
 
 
 def test_product_class_bulk_update_no_permission(
-        staff_api_client,
-        channel_variant,
-        product_class_recommendation,
-        permission_manage_product_class,
+    staff_api_client,
+    channel_variant,
+    product_class_recommendation,
+    permission_manage_product_class,
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -266,7 +266,7 @@ mutation ProductClassRecommendationBulkDelete($ids: [ID]!){
 
 
 def test_product_class_bulk_delete(
-        staff_api_client, product_class_recommendation, permission_manage_product_class
+    staff_api_client, product_class_recommendation, permission_manage_product_class
 ):
     # give
     product_class_id = graphene.Node.to_global_id(
@@ -290,7 +290,7 @@ def test_product_class_bulk_delete(
 
 
 def test_product_class_bulk_delete_no_permission(
-        staff_api_client, product_class_recommendation
+    staff_api_client, product_class_recommendation
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -320,10 +320,10 @@ mutation ProductClassRecommendationBulkChangeStatus($ids: [ID!]!, $status: Strin
 
 
 def test_product_class_bulk_change_status_draft_submit(
-        staff_api_client,
-        channel_variant,
-        product_class_recommendation,
-        permission_manage_product_class,
+    staff_api_client,
+    channel_variant,
+    product_class_recommendation,
+    permission_manage_product_class,
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -351,10 +351,10 @@ def test_product_class_bulk_change_status_draft_submit(
 
 
 def test_product_class_bulk_change_status_approve(
-        staff_api_client,
-        channel_variant,
-        product_class_recommendation,
-        permission_manage_product_class,
+    staff_api_client,
+    channel_variant,
+    product_class_recommendation,
+    permission_manage_product_class,
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -384,10 +384,10 @@ def test_product_class_bulk_change_status_approve(
 
 
 def test_product_class_bulk_change_status_errors(
-        staff_api_client,
-        channel_variant,
-        product_class_recommendation,
-        permission_manage_product_class,
+    staff_api_client,
+    channel_variant,
+    product_class_recommendation,
+    permission_manage_product_class,
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -414,7 +414,7 @@ def test_product_class_bulk_change_status_errors(
 
 
 def test_product_class_bulk_change_status_no_permission(
-        staff_api_client, product_class_recommendation
+    staff_api_client, product_class_recommendation
 ):
     # give
     # give
@@ -435,10 +435,10 @@ def test_product_class_bulk_change_status_no_permission(
 
 
 def test_product_class_bulk_change_status_approve_no_permission(
-        staff_api_client,
-        channel_variant,
-        product_class_recommendation,
-        permission_manage_product_class,
+    staff_api_client,
+    channel_variant,
+    product_class_recommendation,
+    permission_manage_product_class,
 ):
     # give
     product_class_id_expect = product_class_recommendation.id

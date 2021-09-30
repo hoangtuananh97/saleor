@@ -28,7 +28,7 @@ mutation ProductClassRecommendationCreate($input: ProductClassRecommendationInpu
 
 
 def test_product_class_create(
-        staff_api_client, channel_variant, permission_manage_product_class
+    staff_api_client, channel_variant, permission_manage_product_class
 ):
     # give
     listing_id_expect = channel_variant.id
@@ -62,7 +62,7 @@ def test_product_class_create(
 
 
 def test_product_class_create_error(
-        staff_api_client, channel_variant, permission_manage_product_class
+    staff_api_client, channel_variant, permission_manage_product_class
 ):
     # give
     listing_id_expect = channel_variant.id
@@ -90,7 +90,7 @@ def test_product_class_create_error(
 
 
 def test_product_class_create_no_permission(
-        staff_api_client, channel_variant, product_class_recommendation
+    staff_api_client, channel_variant, product_class_recommendation
 ):
     # give
     listing_id_expect = channel_variant.id
@@ -133,10 +133,10 @@ mutation ProductClassRecommendationUpdate(
 
 
 def test_product_class_update(
-        staff_api_client,
-        channel_variant,
-        product_class_recommendation,
-        permission_manage_product_class,
+    staff_api_client,
+    channel_variant,
+    product_class_recommendation,
+    permission_manage_product_class,
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -174,10 +174,10 @@ def test_product_class_update(
 
 
 def test_product_class_update_error(
-        staff_api_client,
-        channel_variant,
-        product_class_recommendation,
-        permission_manage_product_class,
+    staff_api_client,
+    channel_variant,
+    product_class_recommendation,
+    permission_manage_product_class,
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -211,10 +211,10 @@ def test_product_class_update_error(
 
 
 def test_product_class_update_no_permission(
-        staff_api_client,
-        channel_variant,
-        product_class_recommendation,
-        permission_manage_product_class,
+    staff_api_client,
+    channel_variant,
+    product_class_recommendation,
+    permission_manage_product_class,
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -254,7 +254,7 @@ mutation ProductClassRecommendationDelete($id: ID!){
 
 
 def test_product_class_delete(
-        staff_api_client, product_class_recommendation, permission_manage_product_class
+    staff_api_client, product_class_recommendation, permission_manage_product_class
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -280,7 +280,7 @@ def test_product_class_delete(
 
 
 def test_product_class_delete_no_permission(
-        staff_api_client, product_class_recommendation
+    staff_api_client, product_class_recommendation
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -316,7 +316,7 @@ mutation ProductClassRecommendationChangeStatus($id: ID!, $status: String!){
 
 
 def test_product_class_change_status_draft_submit(
-        staff_api_client, product_class_recommendation, permission_manage_product_class
+    staff_api_client, product_class_recommendation, permission_manage_product_class
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -343,7 +343,7 @@ def test_product_class_change_status_draft_submit(
 
 
 def test_product_class_change_status_approve(
-        staff_api_client, product_class_recommendation, permission_manage_product_class
+    staff_api_client, product_class_recommendation, permission_manage_product_class
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -371,7 +371,7 @@ def test_product_class_change_status_approve(
 
 
 def test_product_class_change_status_errors(
-        staff_api_client, product_class_recommendation, permission_manage_product_class
+    staff_api_client, product_class_recommendation, permission_manage_product_class
 ):
     # give
     product_class_id = graphene.Node.to_global_id(
@@ -393,7 +393,7 @@ def test_product_class_change_status_errors(
 
 
 def test_product_class_change_status_no_permission(
-        staff_api_client, product_class_recommendation
+    staff_api_client, product_class_recommendation
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
@@ -411,7 +411,7 @@ def test_product_class_change_status_no_permission(
 
 
 def test_product_class_change_status_approved_no_permission(
-        staff_api_client, product_class_recommendation, permission_manage_product_class
+    staff_api_client, product_class_recommendation, permission_manage_product_class
 ):
     # give
     product_class_id = graphene.Node.to_global_id(

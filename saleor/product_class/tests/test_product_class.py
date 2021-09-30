@@ -30,7 +30,7 @@ query GetProductsClassRecommendation($first: Int, $last: Int,
 
 
 def test_list_product_class(
-        staff_api_client, product_class_recommendation, permission_manage_product_class
+    staff_api_client, product_class_recommendation, permission_manage_product_class
 ):
     # given
     product_class_id_expect = product_class_recommendation.id
@@ -50,9 +50,9 @@ def test_list_product_class(
 
 
 def test_list_product_class_by_channel_and_variant_product_attribute(
-        staff_api_client,
-        product_class_recommendation,
-        permission_manage_product_class,
+    staff_api_client,
+    product_class_recommendation,
+    permission_manage_product_class,
 ):
     # given
     product_class_id_expect = product_class_recommendation.id
@@ -85,7 +85,7 @@ def test_list_product_class_by_channel_and_variant_product_attribute(
 
 
 def test_list_product_class_no_permission(
-        staff_api_client, product_class_recommendation
+    staff_api_client, product_class_recommendation
 ):
     # give
     query = QUERY_LIST_PRODUCT_CLASS
@@ -108,7 +108,7 @@ query GetProductClassRecommendation($id: ID!){
 
 
 def test_detail_product_class(
-        staff_api_client, product_class_recommendation, permission_manage_product_class
+    staff_api_client, product_class_recommendation, permission_manage_product_class
 ):
     # given
     product_class_id_expect = product_class_recommendation.id
@@ -131,7 +131,7 @@ def test_detail_product_class(
 
 
 def test_detail_product_class_no_permission(
-        staff_api_client, product_class_recommendation
+    staff_api_client, product_class_recommendation
 ):
     # give
     product_class_id_expect = product_class_recommendation.id
