@@ -63,7 +63,7 @@ class ChannelListingFilterInput(graphene.InputObjectType):
     metadata = graphene.Field(
         ChannelListingMetadataInput,
         required=False,
-        description="Filter listing metadata."
+        description="Filter listing metadata.",
     )
     channel_listing_ids = graphene.List(
         graphene.NonNull(graphene.ID),

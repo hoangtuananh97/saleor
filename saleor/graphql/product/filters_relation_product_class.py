@@ -14,14 +14,22 @@ from saleor.product.models import Product, ProductVariant, ProductVariantChannel
 def filter_listing_metadata(qs, _, value, field):
     for metadata_item in value:
         if metadata_item.value:
-            value = Q(**{"metadata__product_class__{}__contains".format(field): {
-                metadata_item.key: metadata_item.value
-            }})
+            value = Q(
+                **{
+                    "metadata__product_class__{}__contains".format(field): {
+                        metadata_item.key: metadata_item.value
+                    }
+                }
+            )
             qs = qs.filter(value)
         else:
-            key = Q(**{
-                "metadata__product_class__{}__has_key".format(field): metadata_item.key
-            })
+            key = Q(
+                **{
+                    "metadata__product_class__{}__has_key".format(
+                        field
+                    ): metadata_item.key
+                }
+            )
             qs = qs.filter(key)
     return qs
 

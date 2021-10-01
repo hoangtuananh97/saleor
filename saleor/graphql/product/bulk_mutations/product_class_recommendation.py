@@ -17,8 +17,9 @@ from saleor.graphql.product.mutations.product_class_recommendation import (
     ProductClassRecommendationMixin,
 )
 from saleor.graphql.product.types import ProductClassRecommendation
-from ..enums import ProductClassRecommendationEnum
+
 from ....product_class import ProductClassRecommendationStatus, models
+from ..enums import ProductClassRecommendationEnum
 
 
 class ProductClassRecommendationBulkUpdateInput(ProductClassRecommendationInput):
@@ -196,8 +197,7 @@ class ProductClassRecommendationBulkChangeStatus(
         group_data_by_listing = {}
         # get new values
         product_classes = models.ProductClassRecommendation.objects.filter(
-            status=ProductClassRecommendationStatus.APPROVED,
-            listing_id__in=listing_ids
+            status=ProductClassRecommendationStatus.APPROVED, listing_id__in=listing_ids
         )
         product_classes = product_classes.order_by("listing_id", "-approved_at")
         # because loop order by approved_at => only get 1 or 2 value in dict
@@ -217,9 +217,7 @@ class ProductClassRecommendationBulkChangeStatus(
                     "current": cls.fields_save_metadata(values[0]),
                 }
                 if len(values) > 1:
-                    obj_metadata["previous"] = cls.fields_save_metadata(
-                        values[1]
-                    )
+                    obj_metadata["previous"] = cls.fields_save_metadata(values[1])
 
                 listing = models.ProductVariantChannelListing.objects.get(id=key)
                 listing.store_value_in_metadata({"product_class": obj_metadata})

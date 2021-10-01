@@ -18,7 +18,6 @@ from saleor.graphql.product.types.product_class_recommendation import (
 from saleor.product_class import ProductClassRecommendationStatus
 
 from ....core.exceptions import PermissionDenied
-from ....product.models import ProductVariantChannelListing
 from ....product_class import models
 from ....product_class.error_codes import ProductClassRecommendationErrorCode
 from ..enums import ProductClassRecommendationEnum
@@ -238,9 +237,7 @@ class ProductClassRecommendationChangeStatus(
         )
 
         obj_metadata = {
-            "current": cls.fields_save_metadata(
-                model_to_dict(product_class_current)
-            ),
+            "current": cls.fields_save_metadata(model_to_dict(product_class_current)),
         }
         if product_class_previous:
             obj_metadata["previous"] = cls.fields_save_metadata(
