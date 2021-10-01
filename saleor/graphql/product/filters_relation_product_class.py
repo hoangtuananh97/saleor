@@ -11,22 +11,18 @@ from saleor.graphql.utils.filters import filter_fields_containing_value
 from saleor.product.models import Product, ProductVariant, ProductVariantChannelListing
 
 
-def filter_metadata(qs, _, value):
+def filter_listing_metadata(qs, _, value, field):
     for metadata_item in value:
         if metadata_item.value:
-            qs = qs.filter(
-                Q(metadata__current__contains={metadata_item.key: metadata_item.value})
-                | Q(
-                    metadata__previous__contains={
-                        metadata_item.key: metadata_item.value
-                    }
-                )
-            )
+            value = Q(**{"metadata__product_class__{}__contains".format(field): {
+                metadata_item.key: metadata_item.value
+            }})
+            qs = qs.filter(value)
         else:
-            qs = qs.filter(
-                Q(metadata__current__has_key=metadata_item.key)
-                | Q(metadata__previous__has_key=metadata_item.key)
-            )
+            key = Q(**{
+                "metadata__product_class__{}__has_key".format(field): metadata_item.key
+            })
+            qs = qs.filter(key)
     return qs
 
 
@@ -86,9 +82,14 @@ class FilterFieldChannelListing:
         qs = qs.filter(listing__channel_id__in=qs_channel)
         return qs
 
-    def filter_metadata(self, qs, _, metadata):
+    def filter_listing_metadata(self, qs, _, metadata):
         qs_listing = ProductVariantChannelListing.objects.values_list("id", flat=True)
-        qs_listing = filter_metadata(qs_listing, _, metadata)
+        current = metadata.get("current")
+        previous = metadata.get("previous")
+        if current:
+            qs_listing = filter_listing_metadata(qs_listing, _, current, "current")
+        if previous:
+            qs_listing = filter_listing_metadata(qs_listing, _, previous, "previous")
         qs = qs.filter(listing_id__in=qs_listing)
         return qs
 

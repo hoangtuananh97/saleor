@@ -62,7 +62,7 @@ def test_list_product_class_by_channel_and_variant_product_attribute(
         "sort": {"direction": "ASC", "field": "DATETIME"},
         "filter": {
             "channelListing": {
-                "metadata": [{"key": "key_A"}],
+                "metadata": {"current": [{"key": "key_A"}]},
                 "channel": {"search": "Main Channel"},
                 "productVariant": {
                     "search": "SKU_A",

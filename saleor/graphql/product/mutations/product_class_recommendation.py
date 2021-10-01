@@ -76,7 +76,7 @@ class ProductClassRecommendationChangeStatusMixin:
         return True
 
     @classmethod
-    def validate(cls, cleaned_input):
+    def validate(cls, info, cleaned_input):
         status = cleaned_input.get("status")
         if status and status not in [
             item[0] for item in ProductClassRecommendationStatus.CHOICES
@@ -85,6 +85,29 @@ class ProductClassRecommendationChangeStatusMixin:
                 {
                     "product_class": ValidationError(
                         "status don't exists",
+                        code=ProductClassRecommendationErrorCode.INVALID.value,
+                    )
+                }
+            )
+        return True
+
+    @classmethod
+    def fields_save_metadata(cls, data):
+        return {
+            "product_class_qty": data["product_class_qty"],
+            "product_class_value": data["product_class_value"],
+            "product_class_recommendation": data["product_class_recommendation"],
+            "status": data["status"],
+            "approved_at": data["approved_at"],
+        }
+
+    @classmethod
+    def check_instance(cls, instance):
+        if instance.status == ProductClassRecommendationStatus.APPROVED:
+            raise ValidationError(
+                {
+                    "product_class": ValidationError(
+                        "A product class have been approved",
                         code=ProductClassRecommendationErrorCode.INVALID.value,
                     )
                 }
@@ -202,15 +225,42 @@ class ProductClassRecommendationChangeStatus(
 
     @classmethod
     @traced_atomic_transaction()
+    def update_metadata(cls, product_class_current):
+        listing_id = product_class_current.listing_id
+        listing = product_class_current.listing
+        product_class_previous = (
+            models.ProductClassRecommendation.objects.filter(
+                listing_id=listing_id, status=ProductClassRecommendationStatus.APPROVED
+            )
+            .exclude(id=product_class_current.id)
+            .order_by("-approved_at")
+            .first()
+        )
+
+        obj_metadata = {
+            "current": cls.fields_save_metadata(
+                model_to_dict(product_class_current)
+            ),
+        }
+        if product_class_previous:
+            obj_metadata["previous"] = cls.fields_save_metadata(
+                model_to_dict(product_class_previous)
+            )
+        listing.store_value_in_metadata({"product_class": obj_metadata})
+        listing.save()
+
+    @classmethod
+    @traced_atomic_transaction()
     def perform_mutation(cls, _root, info, **data):
         pk = data.get("id")
         status = data.get("status")
         user = info.context.user
-        cls.validate(data)
+        cls.validate(info, data)
         cls.check_permission_change_status(info, status)
         product_class = cls.get_node_or_error(
             info, pk, only_type=ProductClassRecommendation
         )
+        cls.check_instance(product_class)
         product_class.status = status
         product_class.updated_by_id = user.id
 
@@ -219,25 +269,7 @@ class ProductClassRecommendationChangeStatus(
             product_class.approved_at = timezone.datetime.now()
 
         product_class.save()
-        transaction.on_commit(lambda: update_metadata(product_class))
+        transaction.on_commit(lambda: cls.update_metadata(product_class))
         return ProductClassRecommendationChangeStatus(
             product_class_recommendation=product_class
         )
-
-
-@traced_atomic_transaction()
-def update_metadata(product_class):
-    listing_id = product_class.listing_id
-    listing = ProductVariantChannelListing.objects.filter(id=listing_id).first()
-    product_classes_approved = models.ProductClassRecommendation.objects.filter(
-        listing_id=listing_id
-    ).order_by("approved_at")
-    product_classes_approved = product_classes_approved[:2]
-
-    obj_metadata = {
-        "current": model_to_dict(product_classes_approved[0]),
-    }
-    if product_classes_approved.__len__() > 1:
-        obj_metadata["previous"] = model_to_dict(product_classes_approved[1])
-    listing.store_value_in_metadata(obj_metadata)
-    listing.save()

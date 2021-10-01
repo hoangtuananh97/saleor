@@ -17,9 +17,8 @@ from saleor.graphql.product.mutations.product_class_recommendation import (
     ProductClassRecommendationMixin,
 )
 from saleor.graphql.product.types import ProductClassRecommendation
-
-from ....product_class import ProductClassRecommendationStatus, models
 from ..enums import ProductClassRecommendationEnum
+from ....product_class import ProductClassRecommendationStatus, models
 
 
 class ProductClassRecommendationBulkUpdateInput(ProductClassRecommendationInput):
@@ -190,12 +189,49 @@ class ProductClassRecommendationBulkChangeStatus(
     def clean_instance(cls, info, instance):
         status = info.variable_values["status"]
         cls.check_permission_change_status(info, status)
+        cls.check_instance(instance)
+
+    @classmethod
+    def save_bulk_metadata(cls, listing_ids):
+        group_data_by_listing = {}
+        # get new values
+        product_classes = models.ProductClassRecommendation.objects.filter(
+            status=ProductClassRecommendationStatus.APPROVED,
+            listing_id__in=listing_ids
+        )
+        product_classes = product_classes.order_by("listing_id", "-approved_at")
+        # because loop order by approved_at => only get 1 or 2 value in dict
+        for item in product_classes:
+            if item.listing_id not in group_data_by_listing.keys():
+                group_data_by_listing[item.listing_id] = [model_to_dict(item)]
+            else:
+                value = group_data_by_listing[item.listing_id]
+                if len(value) == 2:
+                    continue
+                group_data_by_listing[item.listing_id].append(model_to_dict(item))
+
+        # TODO: (issue performance) Update many value different with many id different
+        with transaction.atomic():
+            for key, values in group_data_by_listing.items():
+                obj_metadata = {
+                    "current": cls.fields_save_metadata(values[0]),
+                }
+                if len(values) > 1:
+                    obj_metadata["previous"] = cls.fields_save_metadata(
+                        values[1]
+                    )
+
+                listing = models.ProductVariantChannelListing.objects.get(id=key)
+                listing.store_value_in_metadata({"product_class": obj_metadata})
+                listing.save()
+        return True
 
     @classmethod
     @traced_atomic_transaction()
     def bulk_action(cls, info, queryset, **data):
+        listing_ids = []
         status = data.get("status")
-        cls.validate(data)
+        cls.validate(info, data)
         user = info.context.user
         obj_update = {
             "updated_by_id": user.id,
@@ -205,39 +241,6 @@ class ProductClassRecommendationBulkChangeStatus(
         if status == ProductClassRecommendationStatus.APPROVED:
             obj_update["approved_by_id"] = user.id
             obj_update["approved_at"] = timezone.datetime.now()
+            listing_ids = queryset.values_list("listing_id", flat=True)
         queryset.update(**obj_update)
-
-        ids = queryset.values_list("id", flat=True)
-        save_bulk_metadata(ids)
-
-
-def save_bulk_metadata(ids):
-    listing_ids = []
-    group_data_by_listing = {}
-    # get new values
-    product_classes = models.ProductClassRecommendation.objects.filter(id__in=ids)
-    product_classes = product_classes.order_by("approved_at")
-    # because loop order by approved_at => only get 2 value in dict
-    for item in product_classes:
-        if item.listing_id not in group_data_by_listing.keys():
-            listing_ids.append(item.listing_id)
-            group_data_by_listing[item.listing_id] = [model_to_dict(item)]
-        else:
-            value = group_data_by_listing[item.listing_id]
-            if value.__len__() == 2:
-                continue
-            group_data_by_listing[item.listing_id].append(model_to_dict(item))
-
-    # TODO: (issue performance) Update many value different with many id different
-    with transaction.atomic():
-        for key, values in group_data_by_listing.items():
-            obj_metadata = {
-                "current": values[0],
-            }
-            if values.__len__() > 1:
-                obj_metadata["previous"] = values[1]
-
-            listing = models.ProductVariantChannelListing.objects.get(id=key)
-            listing.store_value_in_metadata(obj_metadata)
-            listing.save()
-    return True
+        cls.save_bulk_metadata(listing_ids)

@@ -50,9 +50,20 @@ def filter_product_class_status(qs, _, value):
     return qs
 
 
+class ChannelListingMetadataInput(graphene.InputObjectType):
+    current = graphene.List(
+        MetadataFilter, required=False, description="Filter listing metadata current."
+    )
+    previous = graphene.List(
+        MetadataFilter, required=False, description="Filter listing metadata previous."
+    )
+
+
 class ChannelListingFilterInput(graphene.InputObjectType):
-    metadata = graphene.List(
-        MetadataFilter, required=False, description="Filter listing metadata."
+    metadata = graphene.Field(
+        ChannelListingMetadataInput,
+        required=False,
+        description="Filter listing metadata."
     )
     channel_listing_ids = graphene.List(
         graphene.NonNull(graphene.ID),
@@ -71,7 +82,9 @@ class ChannelListingFilterInput(graphene.InputObjectType):
 
 class ChannelListingFilter(django_filters.FilterSet):
     ids = GlobalIDMultipleChoiceFilter(field_name="id")
-    metadata = ObjectTypeFilter(input_class=MetadataFilter, method="filter_metadata")
+    metadata = ObjectTypeFilter(
+        input_class=MetadataFilter, method="filter_listing_metadata"
+    )
     product_variant = ObjectTypeFilter(
         input_class=ChannelListingProductVariantFilterInput,
         method="filter_product_variant",
@@ -86,8 +99,8 @@ class ChannelListingFilter(django_filters.FilterSet):
     def filter_channel(self, queryset, name, value):
         return filter_channel_listing.filter_channel(queryset, name, value)
 
-    def filter_metadata(self, queryset, name, value):
-        return filter_channel_listing.filter_metadata(queryset, name, value)
+    def filter_listing_metadata(self, queryset, name, value):
+        return filter_channel_listing.filter_listing_metadata(queryset, name, value)
 
     class Meta:
         model = ProductVariantChannelListing
