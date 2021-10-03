@@ -76,19 +76,7 @@ class ProductClassRecommendationChangeStatusMixin:
 
     @classmethod
     def validate(cls, info, cleaned_input):
-        status = cleaned_input.get("status")
-        if status and status not in [
-            item[0] for item in ProductClassRecommendationStatus.CHOICES
-        ]:
-            raise ValidationError(
-                {
-                    "product_class": ValidationError(
-                        "status don't exists",
-                        code=ProductClassRecommendationErrorCode.INVALID.value,
-                    )
-                }
-            )
-        return True
+        pass
 
     @classmethod
     def fields_save_metadata(cls, data):

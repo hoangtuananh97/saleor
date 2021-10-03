@@ -4,7 +4,6 @@ from graphql_relay import from_global_id
 from saleor.graphql.tests.utils import assert_no_permission, get_graphql_content
 from saleor.product_class.error_codes import ProductClassRecommendationErrorCode
 from saleor.product_class.models import ProductClassRecommendation
-from saleor.tests.fixtures import permission_approve_product_class
 
 QUERY_PRODUCT_CLASS_CREATE = """
 mutation ProductClassRecommendationCreate($input: ProductClassRecommendationInput!){
@@ -343,7 +342,10 @@ def test_product_class_change_status_draft_submit(
 
 
 def test_product_class_change_status_approve(
-    staff_api_client, product_class_recommendation, permission_manage_product_class
+    staff_api_client,
+    product_class_recommendation,
+    permission_manage_product_class,
+    permission_approve_product_class,
 ):
     # give
     product_class_id_expect = product_class_recommendation.id

@@ -4719,7 +4719,7 @@ def product_class_recommendation(db, staff_user, channel_variant_metadata):
 
 
 @pytest.fixture
-def product_class_recommendations(db, staff_user, channel_variant):
+def product_class_recommendations(db, staff_user, channel_variant_metadata):
     return ProductClassRecommendation.objects.bulk_create(
         [
             ProductClassRecommendation(
@@ -4729,14 +4729,31 @@ def product_class_recommendations(db, staff_user, channel_variant):
                 product_class_recommendation="product_class_recommendation",
                 status=ProductClassRecommendationStatus.DRAFT,
                 created_by_id=staff_user.id,
+                created_at="2021-10-01T01:32:29.279226",
             ),
             ProductClassRecommendation(
                 listing_id=channel_variant.id,
                 product_class_qty="product_class_qty1",
                 product_class_value="product_class_value1",
                 product_class_recommendation="product_class_recommendation1",
-                status=ProductClassRecommendationStatus.DRAFT,
+                status=ProductClassRecommendationStatus.SUBMITTED,
                 created_by_id=staff_user.id,
+                updated_by_id=staff_user.id,
+                updated_at="2021-10-01T06:41:29.279226",
+                created_at="2021-10-01T02:32:29.279226",
+            ),
+            ProductClassRecommendation(
+                listing_id=channel_variant.id,
+                product_class_qty="product_class_qty2",
+                product_class_value="product_class_value2",
+                product_class_recommendation="product_class_recommendation2",
+                status=ProductClassRecommendationStatus.APPROVED,
+                created_by_id=staff_user.id,
+                updated_by_id=staff_user.id,
+                approved_by_id=staff_user.id,
+                created_at="2021-10-01T04:32:29.279226",
+                updated_at="2021-10-01T06:32:29.279226",
+                approved_at="2021-10-01T09:41:29.279226",
             ),
         ]
     )

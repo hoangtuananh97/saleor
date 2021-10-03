@@ -1,5 +1,5 @@
 import graphene
-from django.db import transaction
+from django.db.models.expressions import F
 from django.forms.models import model_to_dict
 from django.utils import timezone
 
@@ -190,38 +190,40 @@ class ProductClassRecommendationBulkChangeStatus(
     def clean_instance(cls, info, instance):
         status = info.variable_values["status"]
         cls.check_permission_change_status(info, status)
-        cls.check_instance(instance)
+        # cls.check_instance(instance)
 
     @classmethod
     def save_bulk_metadata(cls, listing_ids):
         group_data_by_listing = {}
-        # get new values
-        product_classes = models.ProductClassRecommendation.objects.filter(
-            status=ProductClassRecommendationStatus.APPROVED, listing_id__in=listing_ids
+        # each listing have 1 or 2 row is True
+        product_classes = (
+            models.ProductClassRecommendation.objects.query_add_row_number(
+                [F("approved_at").desc()]
+            ).filter(
+                status=ProductClassRecommendationStatus.APPROVED,
+                listing_id__in=listing_ids,
+            )
         )
-        product_classes = product_classes.order_by("listing_id", "-approved_at")
         # because loop order by approved_at => only get 1 or 2 value in dict
         for item in product_classes:
-            if item.listing_id not in group_data_by_listing.keys():
+            if not item.selected:
+                continue
+            if item.row_number == 1:
                 group_data_by_listing[item.listing_id] = [model_to_dict(item)]
-            else:
-                value = group_data_by_listing[item.listing_id]
-                if len(value) == 2:
-                    continue
+            if item.row_number == 2:
                 group_data_by_listing[item.listing_id].append(model_to_dict(item))
 
         # TODO: (issue performance) Update many value different with many id different
-        with transaction.atomic():
-            for key, values in group_data_by_listing.items():
-                obj_metadata = {
-                    "current": cls.fields_save_metadata(values[0]),
-                }
-                if len(values) > 1:
-                    obj_metadata["previous"] = cls.fields_save_metadata(values[1])
+        for key, values in group_data_by_listing.items():
+            obj_metadata = {
+                "current": cls.fields_save_metadata(values[0]),
+            }
+            if len(values) > 1:
+                obj_metadata["previous"] = cls.fields_save_metadata(values[1])
 
-                listing = models.ProductVariantChannelListing.objects.get(id=key)
-                listing.store_value_in_metadata({"product_class": obj_metadata})
-                listing.save()
+            listing = models.ProductVariantChannelListing.objects.get(id=key)
+            listing.store_value_in_metadata({"product_class": obj_metadata})
+            listing.save()
         return True
 
     @classmethod

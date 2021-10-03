@@ -108,6 +108,7 @@ from .resolvers import (
     resolve_collection_by_id,
     resolve_collection_by_slug,
     resolve_collections,
+    resolve_current_previous_product_classes,
     resolve_digital_content_by_id,
     resolve_digital_contents,
     resolve_product_by_id,
@@ -138,6 +139,7 @@ from .types import (
     ProductType,
     ProductVariant,
 )
+from .types.product_class_recommendation import CurrentPreviousProductClass
 
 
 class ProductQueries(graphene.ObjectType):
@@ -416,6 +418,17 @@ class ProductClassRecommendationQueries(graphene.ObjectType):
         description="Product class recommendation.",
     )
 
+    current_previous_product_classes = FilterInputConnectionField(
+        CurrentPreviousProductClass,
+        filter=ProductClassRecommendationFilterInput(
+            description="Filtering options for current previous product class."
+        ),
+        sort_by=ProductClassRecommendationSortingInput(
+            description="Sort current previous product class."
+        ),
+        description="List current previous product class.",
+    )
+
     @permission_required(ProductClassPermissions.MANAGE_PRODUCT_CLASS)
     def resolve_product_class_recommendations(self, info, **kwargs):
         return resolve_product_class_recommendations(info, **kwargs)
@@ -425,6 +438,10 @@ class ProductClassRecommendationQueries(graphene.ObjectType):
         pk = info.variable_values["id"]
         _, pk = from_global_id(pk)
         return resolve_product_class_recommendation(pk)
+
+    @permission_required(ProductClassPermissions.MANAGE_PRODUCT_CLASS)
+    def resolve_current_previous_product_classes(self, info, **kwargs):
+        return resolve_current_previous_product_classes(info, **kwargs)
 
 
 class ProductMutations(graphene.ObjectType):
