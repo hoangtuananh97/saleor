@@ -15,8 +15,8 @@ class ProductClassRecommendationIdLoader(DataLoader):
             listing_id__in=keys,
             status__in=[
                 ProductClassRecommendationStatus.APPROVED,
-                ProductClassRecommendationStatus.SUBMITTED
-            ]
+                ProductClassRecommendationStatus.SUBMITTED,
+            ],
         )
         product_classes_previous = [item for item in product_classes if item.selected]
         product_classes_map = {}

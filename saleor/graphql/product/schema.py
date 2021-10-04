@@ -10,6 +10,7 @@ from ..channel.utils import get_default_channel_slug_or_graphql_error
 from ..core.enums import ReportingPeriod
 from ..core.fields import (
     ChannelContextFilterConnectionField,
+    CurrentPreviousFilterConnectionField,
     FilterInputConnectionField,
     PrefetchingConnectionField,
 )
@@ -418,7 +419,7 @@ class ProductClassRecommendationQueries(graphene.ObjectType):
         description="Product class recommendation.",
     )
 
-    current_previous_product_classes = FilterInputConnectionField(
+    current_previous_product_classes = CurrentPreviousFilterConnectionField(
         CurrentPreviousProductClass,
         filter=ProductClassRecommendationFilterInput(
             description="Filtering options for current previous product class."

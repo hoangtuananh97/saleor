@@ -3,12 +3,9 @@ from graphene import relay
 from graphene_federation import key
 
 from ....core.permissions import ProductClassPermissions
-from ....product_class import models
+from ....product_class import ProductClassRecommendationStatus, models
 from ...account.types import User
 from ...core.connection import CountableDjangoObjectType
-from ..dataloaders.product_class_recommendation import (
-    ProductClassRecommendationIdLoader,
-)
 from .channels import ProductVariantChannelListing
 
 
@@ -78,13 +75,14 @@ class CurrentPreviousProductClass(CountableDjangoObjectType):
         if not _info.context.user.has_perms(permissions):
             return None
 
-        def get_product_class_previous(product_class):
-            if product_class.row_number == 2:
-                return product_class
-            return None
-
-        return (
-            ProductClassRecommendationIdLoader(_info.context)
-            .load(root.listing_id)
-            .then(get_product_class_previous)
+        product_classes = (
+            models.ProductClassRecommendation.objects.qs_filter_current_previous(
+                order_by="created_at desc",
+                filter_row_number="= 2",
+                list_status=[
+                    ProductClassRecommendationStatus.APPROVED,
+                    ProductClassRecommendationStatus.SUBMITTED,
+                ],
+            ).filter(listing_id=root.listing_id)
         )
+        return product_classes.first()

@@ -1,28 +1,43 @@
 from django.db import models
 
-# Create your models here.
-from django.db.models import ExpressionWrapper, Q
-from django.db.models.expressions import F, Window
-from django.db.models.functions import RowNumber
-
 from saleor import settings
 from saleor.core.permissions import ProductClassPermissions
 from saleor.product.models import ProductVariantChannelListing
 from saleor.product_class import ProductClassRecommendationStatus
 
+# Create your models here.
+
 
 class ProductClassesQueryset(models.QuerySet):
-    def query_add_row_number(self, list_order_by):
-        return self.annotate(
-            row_number=Window(
-                expression=RowNumber(),
-                partition_by=[F("listing_id")],
-                order_by=list_order_by,
-            ),
-            selected=ExpressionWrapper(
-                Q(row_number__lte=2), output_field=models.BooleanField()
-            ),
+    def qs_group_current_previous(
+        self, filter_row_number: str, order_by: str, list_status: list
+    ):
+        list_status = tuple(list_status)
+        params = [list_status]
+        sql_raw = """
+        select id
+        from (
+                 select ROW_NUMBER() OVER (
+                     PARTITION BY listing_id
+                     ORDER BY {order_by}) AS row_number,
+                        A.*
+                 from product_class_productclassrecommendation A
+                 WHERE A.status IN  %s
+             ) AS B
+        WHERE B.row_number {filter_row_number}
+        """.format(
+            order_by=order_by, filter_row_number=filter_row_number
         )
+        return self.raw(sql_raw, params=params)
+
+    def qs_filter_current_previous(
+        self, filter_row_number: str, order_by: str, list_status: list
+    ):
+        group_product_classes = self.qs_group_current_previous(
+            filter_row_number, order_by, list_status
+        )
+        ids = [item.id for item in group_product_classes]
+        return self.filter(id__in=ids)
 
 
 class ProductClassRecommendation(models.Model):

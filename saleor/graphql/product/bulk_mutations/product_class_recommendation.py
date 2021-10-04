@@ -1,5 +1,4 @@
 import graphene
-from django.db.models.expressions import F
 from django.forms.models import model_to_dict
 from django.utils import timezone
 
@@ -197,20 +196,24 @@ class ProductClassRecommendationBulkChangeStatus(
         group_data_by_listing = {}
         # each listing have 1 or 2 row is True
         product_classes = (
-            models.ProductClassRecommendation.objects.query_add_row_number(
-                [F("approved_at").desc()]
-            ).filter(
+            models.ProductClassRecommendation.objects.qs_filter_current_previous(
+                order_by="approved_at desc",
+                filter_row_number="<= 2",
+                list_status=[
+                    ProductClassRecommendationStatus.APPROVED,
+                ],
+            )
+            .filter(
                 status=ProductClassRecommendationStatus.APPROVED,
                 listing_id__in=listing_ids,
             )
+            .order_by("-approved_at")
         )
         # because loop order by approved_at => only get 1 or 2 value in dict
         for item in product_classes:
-            if not item.selected:
-                continue
-            if item.row_number == 1:
+            if item.listing_id not in group_data_by_listing.keys():
                 group_data_by_listing[item.listing_id] = [model_to_dict(item)]
-            if item.row_number == 2:
+            else:
                 group_data_by_listing[item.listing_id].append(model_to_dict(item))
 
         # TODO: (issue performance) Update many value different with many id different

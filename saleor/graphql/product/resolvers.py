@@ -1,19 +1,17 @@
 from django.db.models import Exists, OuterRef, Sum
-from django.db.models.expressions import F
 
 from ...account.utils import requestor_is_staff_member_or_app
 from ...channel.models import Channel
-from ...core.permissions import ProductClassPermissions
 from ...core.tracing import traced_resolver
 from ...order import OrderStatus
 from ...order.models import Order
 from ...product import models
-from ...product_class import ProductClassRecommendationStatus
 from ...product_class.models import ProductClassRecommendation
 from ..channel import ChannelQsContext
 from ..core.utils import from_global_id_or_error
 from ..utils import get_user_or_app_from_context
 from ..utils.filters import filter_by_period
+from .utils import check_permission_product_class_approved
 
 
 def resolve_category_by_id(id):
@@ -182,35 +180,9 @@ def resolve_product_class_recommendation(pk):
     return ProductClassRecommendation.objects.filter(id=pk).first()
 
 
-def fields_save_metadata(data):
-    return {
-        "product_class_qty": data["product_class_qty"],
-        "product_class_value": data["product_class_value"],
-        "product_class_recommendation": data["product_class_recommendation"],
-        "status": data["status"],
-        "approved_at": data["approved_at"],
-    }
-
-
 def resolve_current_previous_product_classes(info, **kwargs):
-    permissions = (ProductClassPermissions.APPROVE_PRODUCT_CLASS,)
-    list_status = [ProductClassRecommendationStatus.SUBMITTED]
-    qs_group_product_classes = ProductClassRecommendation.objects.query_add_row_number(
-        [F("created_at").desc()]
-    )
-    if info.context.user.has_perms(permissions):
-        list_status.append(ProductClassRecommendationStatus.APPROVED)
-    else:
-        list_status.append(ProductClassRecommendationStatus.DRAFT)
-
-    qs_group_product_classes = qs_group_product_classes.filter(status__in=list_status)
-
-    product_classes_current_ids = [
-        item.id
-        for item in qs_group_product_classes
-        if item.selected and item.row_number == 1
-    ]
+    list_status = check_permission_product_class_approved(info)
     product_classes = ProductClassRecommendation.objects.filter(
-        id__in=product_classes_current_ids, status__in=list_status
+        status__in=list_status,
     )
     return product_classes
