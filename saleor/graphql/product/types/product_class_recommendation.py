@@ -65,7 +65,17 @@ class CurrentPreviousProductClass(CountableDjangoObjectType):
     def resolve_product_class_current(
         root: models.ProductClassRecommendation, _info, **_kwargs
     ):
-        return root
+        product_classes = (
+            models.ProductClassRecommendation.objects.qs_filter_current_previous(
+                order_by="created_at desc",
+                filter_row_number="= 1",
+                list_status=[
+                    ProductClassRecommendationStatus.APPROVED,
+                    ProductClassRecommendationStatus.SUBMITTED,
+                ],
+            ).filter(listing_id=root.listing_id)
+        )
+        return product_classes.first()
 
     @staticmethod
     def resolve_product_class_previous(
