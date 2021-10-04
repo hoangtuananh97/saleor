@@ -190,7 +190,7 @@ class ProductClassRecommendationBulkChangeStatus(
     def clean_instance(cls, info, instance):
         status = info.variable_values["status"]
         cls.check_permission_change_status(info, status)
-        # cls.check_instance(instance)
+        cls.check_instance(instance)
 
     @classmethod
     def save_bulk_metadata(cls, listing_ids):
