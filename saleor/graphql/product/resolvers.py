@@ -182,7 +182,7 @@ def resolve_product_class_recommendation(pk):
 
 def resolve_current_previous_product_classes(info, **kwargs):
     list_status = check_permission_product_class_approved(info)
-    product_classes = ProductClassRecommendation.objects.qs_group_current_previous(
+    product_classes = ProductClassRecommendation.objects.qs_filter_current_previous(
         order_by="created_at desc",
         filter_row_number="<= 2",
         list_status=list_status,
