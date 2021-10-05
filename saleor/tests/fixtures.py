@@ -102,6 +102,7 @@ from ..product.models import (
 from ..product.tests.utils import create_image
 from ..product_class import ProductClassRecommendationStatus
 from ..product_class.models import ProductClassRecommendation
+from ..product_max_min.models import ProductMaxMin
 from ..shipping.models import (
     ShippingMethod,
     ShippingMethodChannelListing,
@@ -4707,6 +4708,11 @@ def permission_approve_product_class():
 
 
 @pytest.fixture
+def permission_manage_product_max_min():
+    return Permission.objects.get(codename="manage_product_max_min")
+
+
+@pytest.fixture
 def product_class_recommendation(db, staff_user, channel_variant_metadata):
     return ProductClassRecommendation.objects.create(
         listing_id=channel_variant.id,
@@ -4772,3 +4778,13 @@ def channel_variant_metadata(product, channel_USD) -> ProductVariantChannelListi
         private_metadata={"private_key": "private_value"},
     )
     return listing
+
+
+@pytest.fixture
+def product_max_min(db, staff_user, channel_variant):
+    return ProductMaxMin.objects.create(
+        listing_id=channel_variant.id,
+        max_level=10,
+        min_level=4,
+        created_by_id=staff_user.id,
+    )

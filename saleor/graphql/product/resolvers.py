@@ -7,6 +7,7 @@ from ...order import OrderStatus
 from ...order.models import Order
 from ...product import models
 from ...product_class.models import ProductClassRecommendation
+from ...product_max_min.models import ProductMaxMin
 from ..channel import ChannelQsContext
 from ..core.utils import from_global_id_or_error
 from ..utils import get_user_or_app_from_context
@@ -190,3 +191,7 @@ def resolve_current_previous_product_classes(info, **kwargs):
         status__in=list_status,
     )
     return product_classes
+
+
+def resolve_product_max_min(pk):
+    return ProductMaxMin.objects.filter(id=pk).first()

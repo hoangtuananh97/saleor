@@ -5,7 +5,7 @@ from saleor.core.permissions import ProductMaxMinPermissions
 from saleor.product.models import ProductVariantChannelListing
 
 
-class ProductClassRecommendation(models.Model):
+class ProductMaxMin(models.Model):
     listing = models.ForeignKey(
         ProductVariantChannelListing,
         on_delete=models.CASCADE,

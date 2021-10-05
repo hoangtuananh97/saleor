@@ -4,7 +4,11 @@ from graphql_relay import from_global_id
 from saleor.core.tracing import traced_resolver
 
 from ...account.utils import requestor_is_staff_member_or_app
-from ...core.permissions import ProductClassPermissions, ProductPermissions
+from ...core.permissions import (
+    ProductClassPermissions,
+    ProductMaxMinPermissions,
+    ProductPermissions,
+)
 from ..channel import ChannelContext
 from ..channel.utils import get_default_channel_slug_or_graphql_error
 from ..core.enums import ReportingPeriod
@@ -29,6 +33,11 @@ from .bulk_mutations.product_class_recommendation import (
     ProductClassRecommendationBulkCreate,
     ProductClassRecommendationBulkDelete,
     ProductClassRecommendationBulkUpdate,
+)
+from .bulk_mutations.product_max_min import (
+    ProductMaxMinBulkCreate,
+    ProductMaxMinBulkDelete,
+    ProductMaxMinBulkUpdate,
 )
 from .bulk_mutations.products import (
     CategoryBulkDelete,
@@ -74,6 +83,11 @@ from .mutations.product_class_recommendation import (
     ProductClassRecommendationDelete,
     ProductClassRecommendationUpdate,
 )
+from .mutations.product_max_min import (
+    ProductMaxMinCreate,
+    ProductMaxMinDelete,
+    ProductMaxMinUpdate,
+)
 from .mutations.products import (
     CategoryCreate,
     CategoryDelete,
@@ -116,6 +130,7 @@ from .resolvers import (
     resolve_product_by_slug,
     resolve_product_class_recommendation,
     resolve_product_class_recommendations,
+    resolve_product_max_min,
     resolve_product_type_by_id,
     resolve_product_types,
     resolve_product_variant_by_sku,
@@ -141,6 +156,7 @@ from .types import (
     ProductVariant,
 )
 from .types.product_class_recommendation import CurrentPreviousProductClass
+from .types.product_max_min import ProductMaxMin
 
 
 class ProductQueries(graphene.ObjectType):
@@ -445,6 +461,23 @@ class ProductClassRecommendationQueries(graphene.ObjectType):
         return resolve_current_previous_product_classes(info, **kwargs)
 
 
+class ProductMaxMinQueries(graphene.ObjectType):
+
+    product_max_min = graphene.Field(
+        ProductMaxMin,
+        id=graphene.Argument(
+            graphene.ID, description="ID of the product max min.", required=True
+        ),
+        description="Product max min.",
+    )
+
+    @permission_required(ProductMaxMinPermissions.MANAGE_PRODUCT_MAX_MIN)
+    def resolve_product_max_min(self, info, **kwargs):
+        pk = info.variable_values["id"]
+        _, pk = from_global_id(pk)
+        return resolve_product_max_min(pk)
+
+
 class ProductMutations(graphene.ObjectType):
     product_attribute_assign = ProductAttributeAssign.Field()
     product_attribute_unassign = ProductAttributeUnassign.Field()
@@ -530,3 +563,11 @@ class ProductMutations(graphene.ObjectType):
     product_class_recommendation_bulk_change_status = (
         ProductClassRecommendationBulkChangeStatus.Field()
     )
+
+    # product class max min
+    product_max_min_create = ProductMaxMinCreate.Field()
+    product_max_min_update = ProductMaxMinUpdate.Field()
+    product_max_min_delete = ProductMaxMinDelete.Field()
+    product_max_min_bulk_create = ProductMaxMinBulkCreate.Field()
+    product_max_min_bulk_update = ProductMaxMinBulkUpdate.Field()
+    product_max_min_bulk_delete = ProductMaxMinBulkDelete.Field()
