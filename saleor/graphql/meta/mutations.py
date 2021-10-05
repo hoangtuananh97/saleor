@@ -149,6 +149,7 @@ class BaseMetadataMutation(BaseMutation):
                     product_models.ProductVariant,
                     shipping_models.ShippingMethod,
                     shipping_models.ShippingZone,
+                    product_models.ProductVariantChannelListing,
                 ]
             ]
         )

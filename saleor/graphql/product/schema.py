@@ -1,14 +1,16 @@
 import graphene
+from graphql_relay import from_global_id
 
 from saleor.core.tracing import traced_resolver
 
 from ...account.utils import requestor_is_staff_member_or_app
-from ...core.permissions import ProductPermissions
+from ...core.permissions import ProductClassPermissions, ProductPermissions
 from ..channel import ChannelContext
 from ..channel.utils import get_default_channel_slug_or_graphql_error
 from ..core.enums import ReportingPeriod
 from ..core.fields import (
     ChannelContextFilterConnectionField,
+    CurrentPreviousFilterConnectionField,
     FilterInputConnectionField,
     PrefetchingConnectionField,
 )
@@ -22,6 +24,12 @@ from ..translations.mutations import (
     ProductVariantTranslate,
 )
 from ..utils import get_user_or_app_from_context
+from .bulk_mutations.product_class_recommendation import (
+    ProductClassRecommendationBulkChangeStatus,
+    ProductClassRecommendationBulkCreate,
+    ProductClassRecommendationBulkDelete,
+    ProductClassRecommendationBulkUpdate,
+)
 from .bulk_mutations.products import (
     CategoryBulkDelete,
     CollectionBulkDelete,
@@ -41,6 +49,7 @@ from .filters import (
     ProductTypeFilterInput,
     ProductVariantFilterInput,
 )
+from .filters_product_class import ProductClassRecommendationFilterInput
 from .mutations.attributes import (
     ProductAttributeAssign,
     ProductAttributeUnassign,
@@ -58,6 +67,12 @@ from .mutations.digital_contents import (
     DigitalContentDelete,
     DigitalContentUpdate,
     DigitalContentUrlCreate,
+)
+from .mutations.product_class_recommendation import (
+    ProductClassRecommendationChangeStatus,
+    ProductClassRecommendationCreate,
+    ProductClassRecommendationDelete,
+    ProductClassRecommendationUpdate,
 )
 from .mutations.products import (
     CategoryCreate,
@@ -94,10 +109,13 @@ from .resolvers import (
     resolve_collection_by_id,
     resolve_collection_by_slug,
     resolve_collections,
+    resolve_current_previous_product_classes,
     resolve_digital_content_by_id,
     resolve_digital_contents,
     resolve_product_by_id,
     resolve_product_by_slug,
+    resolve_product_class_recommendation,
+    resolve_product_class_recommendations,
     resolve_product_type_by_id,
     resolve_product_types,
     resolve_product_variant_by_sku,
@@ -109,6 +127,7 @@ from .resolvers import (
 from .sorters import (
     CategorySortingInput,
     CollectionSortingInput,
+    ProductClassRecommendationSortingInput,
     ProductOrder,
     ProductTypeSortingInput,
 )
@@ -117,9 +136,11 @@ from .types import (
     Collection,
     DigitalContent,
     Product,
+    ProductClassRecommendation,
     ProductType,
     ProductVariant,
 )
+from .types.product_class_recommendation import CurrentPreviousProductClass
 
 
 class ProductQueries(graphene.ObjectType):
@@ -378,6 +399,52 @@ class ProductQueries(graphene.ObjectType):
         return resolve_report_product_sales(period, channel_slug=channel)
 
 
+class ProductClassRecommendationQueries(graphene.ObjectType):
+    product_class_recommendations = FilterInputConnectionField(
+        ProductClassRecommendation,
+        filter=ProductClassRecommendationFilterInput(
+            description="Filtering options for product class recommendation."
+        ),
+        sort_by=ProductClassRecommendationSortingInput(
+            description="Sort product class recommendation."
+        ),
+        description="List product class recommendation.",
+    )
+
+    product_class_recommendation = graphene.Field(
+        ProductClassRecommendation,
+        id=graphene.Argument(
+            graphene.ID, description="ID of the product class.", required=True
+        ),
+        description="Product class recommendation.",
+    )
+
+    current_previous_product_classes = CurrentPreviousFilterConnectionField(
+        CurrentPreviousProductClass,
+        filter=ProductClassRecommendationFilterInput(
+            description="Filtering options for current previous product class."
+        ),
+        sort_by=ProductClassRecommendationSortingInput(
+            description="Sort current previous product class."
+        ),
+        description="List current previous product class.",
+    )
+
+    @permission_required(ProductClassPermissions.MANAGE_PRODUCT_CLASS)
+    def resolve_product_class_recommendations(self, info, **kwargs):
+        return resolve_product_class_recommendations(info, **kwargs)
+
+    @permission_required(ProductClassPermissions.MANAGE_PRODUCT_CLASS)
+    def resolve_product_class_recommendation(self, info, **kwargs):
+        pk = info.variable_values["id"]
+        _, pk = from_global_id(pk)
+        return resolve_product_class_recommendation(pk)
+
+    @permission_required(ProductClassPermissions.MANAGE_PRODUCT_CLASS)
+    def resolve_current_previous_product_classes(self, info, **kwargs):
+        return resolve_current_previous_product_classes(info, **kwargs)
+
+
 class ProductMutations(graphene.ObjectType):
     product_attribute_assign = ProductAttributeAssign.Field()
     product_attribute_unassign = ProductAttributeUnassign.Field()
@@ -443,3 +510,23 @@ class ProductMutations(graphene.ObjectType):
 
     variant_media_assign = VariantMediaAssign.Field()
     variant_media_unassign = VariantMediaUnassign.Field()
+
+    # product class recommendation
+    product_class_recommendation_create = ProductClassRecommendationCreate.Field()
+    product_class_recommendation_update = ProductClassRecommendationUpdate.Field()
+    product_class_recommendation_delete = ProductClassRecommendationDelete.Field()
+    product_class_recommendation_bulk_create = (
+        ProductClassRecommendationBulkCreate.Field()
+    )
+    product_class_recommendation_bulk_update = (
+        ProductClassRecommendationBulkUpdate.Field()
+    )
+    product_class_recommendation_bulk_delete = (
+        ProductClassRecommendationBulkDelete.Field()
+    )
+    product_class_recommendation_change_status = (
+        ProductClassRecommendationChangeStatus.Field()
+    )
+    product_class_recommendation_bulk_change_status = (
+        ProductClassRecommendationBulkChangeStatus.Field()
+    )

@@ -6,10 +6,12 @@ from ...core.tracing import traced_resolver
 from ...order import OrderStatus
 from ...order.models import Order
 from ...product import models
+from ...product_class.models import ProductClassRecommendation
 from ..channel import ChannelQsContext
 from ..core.utils import from_global_id_or_error
 from ..utils import get_user_or_app_from_context
 from ..utils.filters import filter_by_period
+from .utils import check_permission_product_class_approved
 
 
 def resolve_category_by_id(id):
@@ -168,3 +170,23 @@ def resolve_report_product_sales(period, channel_slug) -> ChannelQsContext:
     qs = qs.order_by("-quantity_ordered")
 
     return ChannelQsContext(qs=qs, channel_slug=channel_slug)
+
+
+def resolve_product_class_recommendations(_info, **_kwargs):
+    return ProductClassRecommendation.objects.all()
+
+
+def resolve_product_class_recommendation(pk):
+    return ProductClassRecommendation.objects.filter(id=pk).first()
+
+
+def resolve_current_previous_product_classes(info, **kwargs):
+    list_status = check_permission_product_class_approved(info)
+    product_classes = ProductClassRecommendation.objects.qs_filter_current_previous(
+        order_by="created_at desc",
+        filter_row_number="<= 2",
+        list_status=list_status,
+    ).filter(
+        status__in=list_status,
+    )
+    return product_classes

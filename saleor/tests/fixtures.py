@@ -100,6 +100,8 @@ from ..product.models import (
     VariantMedia,
 )
 from ..product.tests.utils import create_image
+from ..product_class import ProductClassRecommendationStatus
+from ..product_class.models import ProductClassRecommendation
 from ..shipping.models import (
     ShippingMethod,
     ShippingMethodChannelListing,
@@ -4679,3 +4681,94 @@ def app_manifest():
         "configurationUrl": "http://127.0.0.1:5000/configuration/",
         "tokenTargetUrl": "http://127.0.0.1:5000/configuration/install",
     }
+
+
+@pytest.fixture
+def channel_variant(product, channel_USD) -> ProductVariantChannelListing:
+    product_variant = ProductVariant.objects.create(product=product, sku="SKU_A")
+    listing = ProductVariantChannelListing.objects.create(
+        variant=product_variant,
+        channel=channel_USD,
+        price_amount=Decimal(10),
+        cost_price_amount=Decimal(1),
+        currency=channel_USD.currency_code,
+    )
+    return listing
+
+
+@pytest.fixture
+def permission_manage_product_class():
+    return Permission.objects.get(codename="manage_product_class")
+
+
+@pytest.fixture
+def permission_approve_product_class():
+    return Permission.objects.get(codename="approve_product_class")
+
+
+@pytest.fixture
+def product_class_recommendation(db, staff_user, channel_variant_metadata):
+    return ProductClassRecommendation.objects.create(
+        listing_id=channel_variant.id,
+        product_class_qty="product_class_qty",
+        product_class_value="product_class_value",
+        product_class_recommendation="product_class_recommendation",
+        status=ProductClassRecommendationStatus.DRAFT,
+        created_by_id=staff_user.id,
+    )
+
+
+@pytest.fixture
+def product_class_recommendations(db, staff_user, channel_variant_metadata):
+    return ProductClassRecommendation.objects.bulk_create(
+        [
+            ProductClassRecommendation(
+                listing_id=channel_variant.id,
+                product_class_qty="product_class_qty",
+                product_class_value="product_class_value",
+                product_class_recommendation="product_class_recommendation",
+                status=ProductClassRecommendationStatus.DRAFT,
+                created_by_id=staff_user.id,
+                created_at="2021-10-01T01:32:29.279226",
+            ),
+            ProductClassRecommendation(
+                listing_id=channel_variant.id,
+                product_class_qty="product_class_qty1",
+                product_class_value="product_class_value1",
+                product_class_recommendation="product_class_recommendation1",
+                status=ProductClassRecommendationStatus.SUBMITTED,
+                created_by_id=staff_user.id,
+                updated_by_id=staff_user.id,
+                updated_at="2021-10-01T06:41:29.279226",
+                created_at="2021-10-01T02:32:29.279226",
+            ),
+            ProductClassRecommendation(
+                listing_id=channel_variant.id,
+                product_class_qty="product_class_qty2",
+                product_class_value="product_class_value2",
+                product_class_recommendation="product_class_recommendation2",
+                status=ProductClassRecommendationStatus.APPROVED,
+                created_by_id=staff_user.id,
+                updated_by_id=staff_user.id,
+                approved_by_id=staff_user.id,
+                created_at="2021-10-01T04:32:29.279226",
+                updated_at="2021-10-01T06:32:29.279226",
+                approved_at="2021-10-01T09:41:29.279226",
+            ),
+        ]
+    )
+
+
+@pytest.fixture
+def channel_variant_metadata(product, channel_USD) -> ProductVariantChannelListing:
+    product_variant = ProductVariant.objects.create(product=product, sku="SKU_A")
+    listing = ProductVariantChannelListing.objects.create(
+        variant=product_variant,
+        channel=channel_USD,
+        price_amount=Decimal(10),
+        cost_price_amount=Decimal(1),
+        currency=channel_USD.currency_code,
+        metadata={"current": {"key_A": "value_A"}},
+        private_metadata={"private_key": "private_value"},
+    )
+    return listing

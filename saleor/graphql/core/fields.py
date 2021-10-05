@@ -9,8 +9,10 @@ from graphql_relay.connection.arrayconnection import connection_from_list_slice
 from promise import Promise
 
 from ...channel.exceptions import ChannelNotDefined, NoDefaultChannel
+from ...product_class.models import ProductClassRecommendation
 from ..channel import ChannelContext, ChannelQsContext
 from ..channel.utils import get_default_channel_slug_or_graphql_error
+from ..product.utils import check_permission_product_class_approved
 from ..utils.sorting import sort_queryset_for_connection
 from .connection import connection_from_queryset_slice
 
@@ -244,3 +246,37 @@ class ChannelContextFilterConnectionField(FilterInputConnectionField):
             edges_with_context.append(edge)
         connection.edges = edges_with_context
         return connection
+
+
+class CurrentPreviousFilterConnectionField(FilterInputConnectionField):
+    # Custom to filter both current and previous product class
+    # remove id in 1 obj current previous
+    @classmethod
+    def filter_iterable(cls, iterable, filterset_class, filters_name, info, **args):
+        group_data_by_listing = {}
+        iterable = super().filter_iterable(
+            iterable, filterset_class, filters_name, info, **args
+        )
+        list_status = check_permission_product_class_approved(info)
+        iterable_ids = [item.id for item in iterable]
+        product_classes = ProductClassRecommendation.objects.qs_group_current_previous(
+            order_by="created_at desc",
+            filter_row_number="<= 2",
+            list_status=list_status,
+        )
+        for item in product_classes:
+            if item.listing_id not in group_data_by_listing.keys():
+                group_data_by_listing[item.listing_id] = [item.id]
+            else:
+                group_data_by_listing[item.listing_id].append(item.id)
+
+        for _, values in group_data_by_listing.items():
+            arr_tmp = []
+            if values[0] in iterable_ids:
+                arr_tmp.append(values[0])
+            if len(values) > 1 and values[1] in iterable_ids:
+                arr_tmp.append(values[1])
+            if len(arr_tmp) > 1:
+                iterable_ids.remove(values[1])
+        iterable = iterable.filter(id__in=iterable_ids)
+        return iterable

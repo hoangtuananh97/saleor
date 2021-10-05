@@ -5,9 +5,11 @@ import graphene
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 
+from ...core.permissions import ProductClassPermissions
 from ...core.tracing import traced_atomic_transaction
 from ...order import OrderStatus
 from ...order import models as order_models
+from ...product_class import ProductClassRecommendationStatus
 from ...warehouse.models import Stock
 
 if TYPE_CHECKING:
@@ -105,3 +107,14 @@ def get_draft_order_lines_data_for_variants(
         order_pks.add(line.order_id)
 
     return DraftOrderLinesData(order_to_lines_mapping, line_pks, order_pks)
+
+
+def check_permission_product_class_approved(info):
+    permissions = (ProductClassPermissions.APPROVE_PRODUCT_CLASS,)
+    list_status = [ProductClassRecommendationStatus.SUBMITTED]
+
+    if info.context.user.has_perms(permissions):
+        list_status.append(ProductClassRecommendationStatus.APPROVED)
+    else:
+        list_status.append(ProductClassRecommendationStatus.DRAFT)
+    return list_status
