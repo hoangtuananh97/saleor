@@ -211,6 +211,7 @@ INSTALLED_APPS = [
     "saleor.app",
     "saleor.custom",
     "saleor.product_class",
+    "saleor.product_max_min",
     # External apps
     "versatileimagefield",
     "django_measurement",

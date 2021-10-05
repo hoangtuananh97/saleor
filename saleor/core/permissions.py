@@ -81,6 +81,10 @@ class ProductClassPermissions(BasePermissionEnum):
     APPROVE_PRODUCT_CLASS = "product_class.approve_product_class"
 
 
+class ProductMaxMinPermissions(BasePermissionEnum):
+    MANAGE_PRODUCT_MAX_MIN = "product_max_min.manage_product_max_min"
+
+
 PERMISSIONS_ENUMS = [
     AccountPermissions,
     AppPermission,
@@ -99,6 +103,7 @@ PERMISSIONS_ENUMS = [
     SitePermissions,
     CheckoutPermissions,
     ProductClassPermissions,
+    ProductMaxMinPermissions,
 ]
 
 
