@@ -1,6 +1,6 @@
 import graphene
 
-from saleor.graphql.tests.utils import get_graphql_content, assert_no_permission
+from saleor.graphql.tests.utils import assert_no_permission, get_graphql_content
 from saleor.product_max_min.error_codes import ProductMaxMinErrorCode
 from saleor.product_max_min.models import ProductMaxMin
 
@@ -21,18 +21,14 @@ mutation ProductMaxMinCreate($input: ProductMaxMinInput!){
 
 
 def test_product_max_min_create(
-        staff_api_client, channel_variant, permission_manage_product_max_min
+    staff_api_client, channel_variant, permission_manage_product_max_min
 ):
     # give
     listing_id_expect = channel_variant.id
     listing_id_convert = graphene.Node.to_global_id(
         "ProductVariantChannelListing", listing_id_expect
     )
-    param = {
-        "listing": listing_id_convert,
-        "maxLevel": 11,
-        "minLevel": 2
-    }
+    param = {"listing": listing_id_convert, "maxLevel": 11, "minLevel": 2}
     query = QUERY_CREATE_PRODUCT_MAX_MIN
     variables = {"input": param}
 
@@ -50,18 +46,14 @@ def test_product_max_min_create(
 
 
 def test_product_max_min_create_error(
-        staff_api_client, channel_variant, permission_manage_product_max_min
+    staff_api_client, channel_variant, permission_manage_product_max_min
 ):
     # give
     listing_id_expect = channel_variant.id
     listing_id_convert = graphene.Node.to_global_id(
         "ProductVariantChannelListing", listing_id_expect
     )
-    param = {
-        "listing": listing_id_convert,
-        "maxLevel": 11,
-        "minLevel": 222
-    }
+    param = {"listing": listing_id_convert, "maxLevel": 11, "minLevel": 222}
     query = QUERY_CREATE_PRODUCT_MAX_MIN
     variables = {"input": param}
 
@@ -77,18 +69,14 @@ def test_product_max_min_create_error(
 
 
 def test_product_max_min_create_no_permission(
-        staff_api_client, channel_variant, product_max_min
+    staff_api_client, channel_variant, product_max_min
 ):
     # give
     listing_id_expect = channel_variant.id
     listing_id_convert = graphene.Node.to_global_id(
         "ProductVariantChannelListing", listing_id_expect
     )
-    param = {
-        "listing": listing_id_convert,
-        "maxLevel": 11,
-        "minLevel": 2
-    }
+    param = {"listing": listing_id_convert, "maxLevel": 11, "minLevel": 2}
     query = QUERY_CREATE_PRODUCT_MAX_MIN
     variables = {"input": param}
 
@@ -116,21 +104,17 @@ mutation ProductMaxMinUpdate($id: ID!, $input: ProductMaxMinInput!){
 
 
 def test_product_max_min_update(
-        staff_api_client, channel_variant, product_max_min,
-        permission_manage_product_max_min
+    staff_api_client,
+    channel_variant,
+    product_max_min,
+    permission_manage_product_max_min,
 ):
     # give
-    product_max_min_id = graphene.Node.to_global_id(
-        "ProductMaxMin", product_max_min.id
-    )
+    product_max_min_id = graphene.Node.to_global_id("ProductMaxMin", product_max_min.id)
     listing_id_convert = graphene.Node.to_global_id(
         "ProductVariantChannelListing", channel_variant.id
     )
-    param = {
-        "listing": listing_id_convert,
-        "maxLevel": 11,
-        "minLevel": 2
-    }
+    param = {"listing": listing_id_convert, "maxLevel": 11, "minLevel": 2}
     query = QUERY_UPDATE_PRODUCT_MAX_MIN
     variables = {"id": product_max_min_id, "input": param}
 
@@ -150,21 +134,17 @@ def test_product_max_min_update(
 
 
 def test_product_max_min_update_error(
-        staff_api_client, channel_variant, product_max_min,
-        permission_manage_product_max_min
+    staff_api_client,
+    channel_variant,
+    product_max_min,
+    permission_manage_product_max_min,
 ):
     # give
-    product_max_min_id = graphene.Node.to_global_id(
-        "ProductMaxMin", product_max_min.id
-    )
+    product_max_min_id = graphene.Node.to_global_id("ProductMaxMin", product_max_min.id)
     listing_id_convert = graphene.Node.to_global_id(
         "ProductVariantChannelListing", channel_variant.id
     )
-    param = {
-        "listing": listing_id_convert,
-        "maxLevel": 11,
-        "minLevel": 2
-    }
+    param = {"listing": listing_id_convert, "maxLevel": 11, "minLevel": 2}
     query = QUERY_UPDATE_PRODUCT_MAX_MIN
     variables = {"id": product_max_min_id, "input": param}
 
@@ -180,20 +160,14 @@ def test_product_max_min_update_error(
 
 
 def test_product_max_min_update_no_permission(
-        staff_api_client, channel_variant, product_max_min
+    staff_api_client, channel_variant, product_max_min
 ):
     # give
-    product_max_min_id = graphene.Node.to_global_id(
-        "ProductMaxMin", product_max_min.id
-    )
+    product_max_min_id = graphene.Node.to_global_id("ProductMaxMin", product_max_min.id)
     listing_id_convert = graphene.Node.to_global_id(
         "ProductVariantChannelListing", channel_variant.id
     )
-    param = {
-        "listing": listing_id_convert,
-        "maxLevel": 11,
-        "minLevel": 2
-    }
+    param = {"listing": listing_id_convert, "maxLevel": 11, "minLevel": 2}
     query = QUERY_UPDATE_PRODUCT_MAX_MIN
     variables = {"id": product_max_min_id, "input": param}
 
@@ -217,13 +191,10 @@ mutation ProductMaxMinDelete($id: ID!){
 }
 """
 
-def test_product_max_min_delete(
-        staff_api_client, channel_variant, product_max_min
-):
+
+def test_product_max_min_delete(staff_api_client, channel_variant, product_max_min):
     # give
-    product_max_min_id = graphene.Node.to_global_id(
-        "ProductMaxMin", product_max_min.id
-    )
+    product_max_min_id = graphene.Node.to_global_id("ProductMaxMin", product_max_min.id)
     query = QUERY_DELETE_PRODUCT_MAX_MIN
     variables = {"id": product_max_min_id}
 
@@ -233,13 +204,15 @@ def test_product_max_min_delete(
     # then
     assert_no_permission(response)
 
+
 def test_product_max_min_delete_no_permission(
-        staff_api_client, channel_variant, product_max_min, permission_manage_product_max_min
+    staff_api_client,
+    channel_variant,
+    product_max_min,
+    permission_manage_product_max_min,
 ):
     # give
-    product_max_min_id = graphene.Node.to_global_id(
-        "ProductMaxMin", product_max_min.id
-    )
+    product_max_min_id = graphene.Node.to_global_id("ProductMaxMin", product_max_min.id)
     query = QUERY_DELETE_PRODUCT_MAX_MIN
     variables = {"id": product_max_min_id}
 

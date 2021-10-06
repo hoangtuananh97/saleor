@@ -59,6 +59,7 @@ from .filters import (
     ProductVariantFilterInput,
 )
 from .filters_product_class import ProductClassRecommendationFilterInput
+from .filters_product_max_min import ProductMaxMinFilterInput
 from .mutations.attributes import (
     ProductAttributeAssign,
     ProductAttributeUnassign,
@@ -136,6 +137,7 @@ from .resolvers import (
     resolve_product_variant_by_sku,
     resolve_product_variants,
     resolve_products,
+    resolve_products_max_min,
     resolve_report_product_sales,
     resolve_variant_by_id,
 )
@@ -143,6 +145,7 @@ from .sorters import (
     CategorySortingInput,
     CollectionSortingInput,
     ProductClassRecommendationSortingInput,
+    ProductMaxMinSortField,
     ProductOrder,
     ProductTypeSortingInput,
 )
@@ -156,7 +159,7 @@ from .types import (
     ProductVariant,
 )
 from .types.product_class_recommendation import CurrentPreviousProductClass
-from .types.product_max_min import ProductMaxMin
+from .types.product_max_min import CurrentPreviousProductMaxMin, ProductMaxMin
 
 
 class ProductQueries(graphene.ObjectType):
@@ -471,11 +474,24 @@ class ProductMaxMinQueries(graphene.ObjectType):
         description="Product max min.",
     )
 
+    products_max_min = FilterInputConnectionField(
+        CurrentPreviousProductMaxMin,
+        filter=ProductMaxMinFilterInput(
+            description="Filtering options for product max min."
+        ),
+        sort_by=ProductMaxMinSortField(description="Sort product max min."),
+        description="List product max min.",
+    )
+
     @permission_required(ProductMaxMinPermissions.MANAGE_PRODUCT_MAX_MIN)
     def resolve_product_max_min(self, info, **kwargs):
         pk = info.variable_values["id"]
         _, pk = from_global_id(pk)
         return resolve_product_max_min(pk)
+
+    @permission_required(ProductMaxMinPermissions.MANAGE_PRODUCT_MAX_MIN)
+    def resolve_products_max_min(self, info, **kwargs):
+        return resolve_products_max_min(info, **kwargs)
 
 
 class ProductMutations(graphene.ObjectType):

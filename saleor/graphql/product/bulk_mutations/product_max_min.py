@@ -1,25 +1,24 @@
 import graphene
 from django.utils import timezone
 
-from saleor.graphql.core.mutations import ModelMutation, ModelBulkDeleteMutation
-from saleor.graphql.product.mutations.product_max_min import ProductMaxMinInput, \
-    ProductMaxMinMixin
+from saleor.graphql.core.mutations import ModelBulkDeleteMutation, ModelMutation
+from saleor.graphql.product.mutations.product_max_min import (
+    ProductMaxMinInput,
+    ProductMaxMinMixin,
+)
 from saleor.graphql.product.types.product_max_min import ProductMaxMin
-from ...core.types.common import ProductMaxMinError
+
 from ....core.permissions import ProductMaxMinPermissions
 from ....core.tracing import traced_atomic_transaction
 from ....product_max_min import models
+from ...core.types.common import ProductMaxMinError
 
 
 class ProductMaxMinBulkUpdateInput(ProductMaxMinInput):
-    id = graphene.ID(
-        description="ID of the product class max min.", required=True
-    )
+    id = graphene.ID(description="ID of the product class max min.", required=True)
 
 
-class BaseProductMaxMinBulk(
-    ModelMutation, ProductMaxMinMixin
-):
+class BaseProductMaxMinBulk(ModelMutation, ProductMaxMinMixin):
     count = graphene.Int(
         required=True,
         default_value=0,
@@ -89,9 +88,7 @@ class ProductMaxMinBulkCreate(BaseProductMaxMinBulk):
     def perform_mutation(cls, _root, info, **data):
         instances = cls.validate(_root, info, **data)
         data = models.ProductMaxMin.objects.bulk_create(instances)
-        return ProductMaxMinBulkCreate(
-            count=len(data), products_max_min=data
-        )
+        return ProductMaxMinBulkCreate(count=len(data), products_max_min=data)
 
 
 class ProductMaxMinBulkUpdate(BaseProductMaxMinBulk):
@@ -132,9 +129,7 @@ class ProductMaxMinBulkUpdate(BaseProductMaxMinBulk):
                 "listing_id",
             ],
         )
-        return ProductMaxMinBulkUpdate(
-            count=len(instances), products_max_min=instances
-        )
+        return ProductMaxMinBulkUpdate(count=len(instances), products_max_min=instances)
 
 
 class ProductMaxMinBulkDelete(ModelBulkDeleteMutation):

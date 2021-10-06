@@ -1,12 +1,13 @@
 import graphene
 from django.core.exceptions import ValidationError
 
-from saleor.graphql.core.mutations import ModelMutation, ModelDeleteMutation
-from ..types.product_max_min import ProductMaxMin
-from ...core.types.common import ProductMaxMinError
+from saleor.graphql.core.mutations import ModelDeleteMutation, ModelMutation
+
 from ....core.permissions import ProductMaxMinPermissions
 from ....product_max_min import models
 from ....product_max_min.error_codes import ProductMaxMinErrorCode
+from ...core.types.common import ProductMaxMinError
+from ..types.product_max_min import ProductMaxMin
 
 
 class ProductMaxMinInput(graphene.InputObjectType):
@@ -87,9 +88,7 @@ class ProductMaxMinCreate(BaseProductMaxMin):
 
 class ProductMaxMinUpdate(BaseProductMaxMin):
     class Arguments:
-        id = graphene.ID(
-            required=True, description="Id to update a product max min."
-        )
+        id = graphene.ID(required=True, description="Id to update a product max min.")
         input = ProductMaxMinInput(
             required=True,
             description="Fields required to update a product max min.",
@@ -110,9 +109,7 @@ class ProductMaxMinUpdate(BaseProductMaxMin):
 
 class ProductMaxMinDelete(ModelDeleteMutation):
     class Arguments:
-        id = graphene.ID(
-            required=True, description="Id to delete a product max min."
-        )
+        id = graphene.ID(required=True, description="Id to delete a product max min.")
 
     class Meta:
         description = "Delete a product max min."
