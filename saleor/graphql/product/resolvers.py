@@ -1,5 +1,4 @@
-from django.db.models import Exists, F, OuterRef, Sum, Window
-from django.db.models.functions import RowNumber
+from django.db.models import Exists, OuterRef, Sum
 
 from ...account.utils import requestor_is_staff_member_or_app
 from ...channel.models import Channel
@@ -198,13 +197,5 @@ def resolve_product_max_min(pk):
     return ProductMaxMin.objects.filter(id=pk).first()
 
 
-def resolve_products_max_min(info, **kwargs):
-    results = ProductMaxMin.objects.annotate(
-        row_number=Window(
-            expression=RowNumber(),
-            partition_by=[F("listing_id")],
-            order_by=F("created_at").desc(),
-        )
-    )
-    product_max_min_ids = [item.id for item in results if item.row_number <= 2]
-    return ProductMaxMin.objects.filter(id__in=product_max_min_ids)
+def resolve_current_previous_products_max_min(info, **kwargs):
+    return ProductMaxMin.objects.qs_filter_current_previous()

@@ -15,6 +15,7 @@ from ..core.enums import ReportingPeriod
 from ..core.fields import (
     ChannelContextFilterConnectionField,
     CurrentPreviousFilterConnectionField,
+    CurrentPreviousProductMaxMinFilterConnectionField,
     FilterInputConnectionField,
     PrefetchingConnectionField,
 )
@@ -125,6 +126,7 @@ from .resolvers import (
     resolve_collection_by_slug,
     resolve_collections,
     resolve_current_previous_product_classes,
+    resolve_current_previous_products_max_min,
     resolve_digital_content_by_id,
     resolve_digital_contents,
     resolve_product_by_id,
@@ -137,7 +139,6 @@ from .resolvers import (
     resolve_product_variant_by_sku,
     resolve_product_variants,
     resolve_products,
-    resolve_products_max_min,
     resolve_report_product_sales,
     resolve_variant_by_id,
 )
@@ -474,13 +475,15 @@ class ProductMaxMinQueries(graphene.ObjectType):
         description="Product max min.",
     )
 
-    products_max_min = FilterInputConnectionField(
-        CurrentPreviousProductMaxMin,
-        filter=ProductMaxMinFilterInput(
-            description="Filtering options for product max min."
-        ),
-        sort_by=ProductMaxMinSortField(description="Sort product max min."),
-        description="List product max min.",
+    current_previous_products_max_min = (
+        CurrentPreviousProductMaxMinFilterConnectionField(
+            CurrentPreviousProductMaxMin,
+            filter=ProductMaxMinFilterInput(
+                description="Filtering options for product max min."
+            ),
+            sort_by=ProductMaxMinSortField(description="Sort product max min."),
+            description="List product max min.",
+        )
     )
 
     @permission_required(ProductMaxMinPermissions.MANAGE_PRODUCT_MAX_MIN)
@@ -490,8 +493,8 @@ class ProductMaxMinQueries(graphene.ObjectType):
         return resolve_product_max_min(pk)
 
     @permission_required(ProductMaxMinPermissions.MANAGE_PRODUCT_MAX_MIN)
-    def resolve_products_max_min(self, info, **kwargs):
-        return resolve_products_max_min(info, **kwargs)
+    def resolve_current_previous_products_max_min(self, info, **kwargs):
+        return resolve_current_previous_products_max_min(info, **kwargs)
 
 
 class ProductMutations(graphene.ObjectType):

@@ -24,18 +24,11 @@ class ProductMaxMin(CountableDjangoObjectType):
         User,
         description="ID of user to update.",
     )
-    approved_by = graphene.Field(
-        User,
-        description="ID of user to approved.",
-    )
     created_at = graphene.DateTime(
         description="Time of user to created.",
     )
     updated_at = graphene.DateTime(
         description="Time of user to update.",
-    )
-    approved_at = graphene.DateTime(
-        description="Time of user to approved.",
     )
 
     class Meta:
@@ -55,9 +48,15 @@ class CurrentPreviousProductMaxMin(CountableDjangoObjectType):
         model = models.ProductMaxMin
 
     @staticmethod
-    def product_max_min_current(root: models.ProductMaxMin, _info, **_kwargs):
+    def resolve_product_max_min_current(root: models.ProductMaxMin, _info, **_kwargs):
         return root
 
     @staticmethod
-    def product_max_min_previous(root: models.ProductMaxMin, _info, **_kwargs):
-        return root
+    def resolve_product_max_min_previous(root: models.ProductMaxMin, _info, **_kwargs):
+        product_max_min = (
+            models.ProductMaxMin.objects.filter(listing_id=root.listing_id)
+            .exclude(id=root.id)
+            .order_by("-created_at")
+            .first()
+        )
+        return product_max_min if product_max_min else None
