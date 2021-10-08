@@ -53,7 +53,7 @@ class BaseProductMaxMin(ModelMutation, ProductMaxMinMixin):
         abstract = True
 
     @classmethod
-    def add_field(cls, cleaned_input, data):
+    def add_field_user(cls, cleaned_input, data):
         raise NotImplementedError
 
     @classmethod
@@ -62,7 +62,7 @@ class BaseProductMaxMin(ModelMutation, ProductMaxMinMixin):
         # validate product class before mutation
         cls.validate_product_max_min(instance, cleaned_input)
         user = info.context.user
-        cleaned_input = cls.add_field(cleaned_input, user)
+        cleaned_input = cls.add_field_user(cleaned_input, user)
         return cleaned_input
 
 
@@ -81,7 +81,7 @@ class ProductMaxMinCreate(BaseProductMaxMin):
         error_type_field = "product_max_min_errors"
 
     @classmethod
-    def add_field(cls, cleaned_input, data):
+    def add_field_user(cls, cleaned_input, data):
         cleaned_input["created_by"] = data
         return cleaned_input
 
@@ -102,7 +102,7 @@ class ProductMaxMinUpdate(BaseProductMaxMin):
         error_type_field = "product_max_min_errors"
 
     @classmethod
-    def add_field(cls, cleaned_input, data):
+    def add_field_user(cls, cleaned_input, data):
         cleaned_input["updated_by"] = data
         return cleaned_input
 

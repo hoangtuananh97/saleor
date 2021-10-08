@@ -59,4 +59,4 @@ class CurrentPreviousProductMaxMin(CountableDjangoObjectType):
             .order_by("-created_at")
             .first()
         )
-        return product_max_min if product_max_min else None
+        return product_max_min

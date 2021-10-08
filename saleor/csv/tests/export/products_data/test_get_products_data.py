@@ -8,7 +8,8 @@ from .....attribute.utils import associate_attribute_values_to_instance
 from .....channel.models import Channel
 from .....product.models import Product, ProductVariant, VariantMedia
 from .....warehouse.models import Warehouse
-from ....utils import ProductExportFields
+from ....utils import ProductExportFields, product_max_min
+from ....utils.export import get_product_max_min_queryset
 from ....utils.products_data import get_products_data
 from .utils import (
     add_channel_to_expected_product_data,
@@ -404,3 +405,37 @@ def test_get_products_data_for_specified_warehouses_channels_and_attributes(
             expected_data.append(data)
 
     assert result_data == expected_data
+
+
+def test_product_max_min_data(
+    staff_api_client, products_max_min, permission_manage_product_max_min
+):
+    # given
+    data = {
+        "filter": {
+            "minLevel": 4,
+            "channelListing": {
+                "metadata": {"current": [{"key": "key_A"}]},
+                "channel": {"search": "Main Channel"},
+                "productVariant": {
+                    "search": "SKU_A",
+                    "product": {"attributes": [{"slug": "color", "values": ["red"]}]},
+                },
+            },
+        },
+    }
+    # then
+    queryset, previous_products_max_min = get_product_max_min_queryset(data)
+    export_data = product_max_min.prepare_data_for_export(
+        queryset, previous_products_max_min
+    )
+    # when
+    export_data = export_data[0]
+    assert export_data["channel_slug"] == "default-channel"
+    assert export_data["channel_name"] == "Main Channel"
+    assert export_data["variant_sku"] == "SKU_A"
+    assert export_data["product_name"] == "Test product"
+    assert int(export_data["previous_min_level"]) == 3
+    assert int(export_data["previous_max_level"]) == 9
+    assert int(export_data["current_min_level"]) == 4
+    assert int(export_data["current_max_level"]) == 10

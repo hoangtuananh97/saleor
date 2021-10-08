@@ -39,7 +39,7 @@ class BaseProductMaxMinBulk(ModelMutation, ProductMaxMinMixin):
         raise NotImplementedError
 
     @classmethod
-    def add_field(cls, cleaned_input, data):
+    def add_field_user(cls, cleaned_input, data):
         raise NotImplementedError
 
     @classmethod
@@ -52,7 +52,7 @@ class BaseProductMaxMinBulk(ModelMutation, ProductMaxMinMixin):
             instance = cls.get_instance(info, **item)
             cleaned_input = cls.clean_input(info, instance, item, input_cls=input_cls)
             cls.validate_product_max_min(instance, cleaned_input)
-            cleaned_input = cls.add_field(cleaned_input, user)
+            cleaned_input = cls.add_field_user(cleaned_input, user)
             instance = cls.construct_instance(instance, cleaned_input)
             cls.clean_instance(info, instance)
             instances.append(instance)
@@ -79,7 +79,7 @@ class ProductMaxMinBulkCreate(BaseProductMaxMinBulk):
         return ProductMaxMinInput
 
     @classmethod
-    def add_field(cls, cleaned_input, data):
+    def add_field_user(cls, cleaned_input, data):
         cleaned_input["created_by"] = data
         return cleaned_input
 
@@ -111,7 +111,7 @@ class ProductMaxMinBulkUpdate(BaseProductMaxMinBulk):
         return ProductMaxMinBulkUpdateInput
 
     @classmethod
-    def add_field(cls, cleaned_input, data):
+    def add_field_user(cls, cleaned_input, data):
         cleaned_input["updated_by"] = data
         return cleaned_input
 

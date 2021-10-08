@@ -8,21 +8,21 @@ from saleor.product.models import ProductVariantChannelListing
 
 
 class ProductMaxMinQueryset(models.QuerySet):
+    def qs_group_partition(self):
+        return ProductMaxMin.objects.annotate(
+            row_number=Window(
+                expression=RowNumber(),
+                partition_by=[F("listing_id")],
+                order_by=F("created_at").desc(),
+            )
+        ).order_by("-created_at")
+
     def get_data_after_group_partition(self):
         group_data_by_listing = {}
         ids = []
-        products_max_min = (
-            ProductMaxMin.objects.annotate(
-                row_number=Window(
-                    expression=RowNumber(),
-                    partition_by=[F("listing_id")],
-                    order_by=F("created_at").desc(),
-                )
-            )
-            .values("listing_id", "id", "row_number")
-            .order_by("-created_at")
+        products_max_min = self.qs_group_partition().values(
+            "listing_id", "id", "row_number"
         )
-
         for item in products_max_min:
             if item["row_number"] > 2:
                 continue

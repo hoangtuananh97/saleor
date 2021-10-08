@@ -86,7 +86,6 @@ def test_current_previous_product_max_min_conditions(
     # then
     content = get_graphql_content(response)
     products_max_min = ProductMaxMin.objects.all().order_by("-created_at")
-    print("content1", content)
     data = content["data"]["currentPreviousProductsMaxMin"]["edges"][0]["node"]
     current = data["productMaxMinCurrent"]
     previous = data["productMaxMinPrevious"]
