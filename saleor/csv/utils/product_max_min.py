@@ -23,9 +23,7 @@ EXPORT_PRODUCT_MAX_MIN_FIELDS = {
 def prepare_data_for_export(queryset, previous_products_max_min):
     data = []
     for item in queryset:
-        data.append(prepare_data_for_one_row(
-            item, previous_products_max_min
-        ))
+        data.append(prepare_data_for_one_row(item, previous_products_max_min))
 
     return data
 
@@ -46,12 +44,8 @@ def prepare_data_for_one_row(item, previous_products_max_min):
         "channel_name": listing.channel.name,
         "variant_sku": listing.variant.sku,
         "product_name": listing.variant.product.name,
-        "selling_unit": get_product_attribute_value(
-            listing.variant, "selling_unit"
-        ),
-        "item_type": get_product_attribute_value(
-            listing.variant, "item_type"
-        ),
+        "selling_unit": get_product_attribute_value(listing.variant, "selling_unit"),
+        "item_type": get_product_attribute_value(listing.variant, "item_type"),
         "current_product_class": get_product_class_metadata(
             listing.metadata, "current"
         ),

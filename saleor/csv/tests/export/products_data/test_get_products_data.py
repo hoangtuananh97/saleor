@@ -407,7 +407,7 @@ def test_get_products_data_for_specified_warehouses_channels_and_attributes(
     assert result_data == expected_data
 
 
-def test_product_max_min_data(
+def test_get_products_max_min_data(
     staff_api_client, products_max_min, permission_manage_product_max_min
 ):
     # given
@@ -431,7 +431,7 @@ def test_product_max_min_data(
     )
     # when
     export_data = export_data[0]
-    assert export_data["channel_slug"] == "default-channel"
+    assert export_data["channel_slug"] == "main"
     assert export_data["channel_name"] == "Main Channel"
     assert export_data["variant_sku"] == "SKU_A"
     assert export_data["product_name"] == "Test product"

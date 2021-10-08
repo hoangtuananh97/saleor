@@ -1,5 +1,6 @@
 import secrets
 from datetime import date, datetime
+from tempfile import NamedTemporaryFile
 from typing import IO, TYPE_CHECKING, Any, Dict, List, Set, Union
 
 import petl as etl
@@ -228,12 +229,10 @@ def create_file_with_headers(file_headers: List[str], delimiter: str, file_type:
     table = etl.wrap([file_headers])
 
     if file_type == FileTypes.CSV:
-        temp_file = open("hello.csv", "w")
-        # temp_file = NamedTemporaryFile("ab+", suffix=".csv")
+        temp_file = NamedTemporaryFile("ab+", suffix=".csv")
         etl.tocsv(table, temp_file.name, delimiter=delimiter)
     else:
-        temp_file = open("hello.xlsx", "w")
-        # temp_file = NamedTemporaryFile("ab+", suffix=".xlsx")
+        temp_file = NamedTemporaryFile("ab+", suffix=".xlsx")
         etl.io.xlsx.toxlsx(table, temp_file.name)
 
     return temp_file
