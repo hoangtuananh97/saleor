@@ -48,10 +48,10 @@ def prepare_data_for_one_row(item, previous_products_max_min):
         "variant_sku": listing.variant.sku,
         "product_name": listing.variant.product.name,
         "selling_unit": get_product_attribute_value(
-            listing.variant, "selling_unit", PRODUCT_ATTRIBUTE_SELLING_UNIT
+            listing.variant, "unit", PRODUCT_ATTRIBUTE_SELLING_UNIT
         ),
         "item_type": get_product_attribute_value(
-            listing.variant, "item_type", PRODUCT_ATTRIBUTE_ITEM_TYPE
+            listing.variant, "entity_type", PRODUCT_ATTRIBUTE_ITEM_TYPE
         ),
         "current_product_class": get_product_class_metadata(
             listing.metadata, "current"
@@ -79,16 +79,13 @@ def get_product_class_metadata(metadata, type_content):
 
 
 def get_product_attribute_value(variant, field_attribute, attribute_key):
-    field = "unit"
     product = variant.product
     attribute = (
-        product.attributes.values("unit", "entity_type")
+        product.attributes.values(field_attribute)
         .filter(assignment__attribute__slug=attribute_key)
         .first()
     )
     if not attribute:
         return ""
-    if field_attribute == "item_type":
-        field = "entity_type"
-    return attribute[field]
+    return attribute[field_attribute]
 
