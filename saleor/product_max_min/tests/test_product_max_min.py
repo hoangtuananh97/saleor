@@ -66,7 +66,7 @@ def test_current_previous_product_max_min_conditions(
         "first": 10,
         "sort": {"direction": "ASC", "field": "DATETIME"},
         "filter": {
-            "minLevel": 4,
+            "minLevel": {"lte": 4},
             "channelListing": {
                 "metadata": {"current": [{"key": "key_A"}]},
                 "channel": {"search": "Main Channel"},

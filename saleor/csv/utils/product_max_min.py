@@ -1,6 +1,9 @@
 import json
 
-from saleor.attribute.models import AssignedProductAttribute
+from saleor.graphql.product.constants import (
+    PRODUCT_ATTRIBUTE_ITEM_TYPE,
+    PRODUCT_ATTRIBUTE_SELLING_UNIT,
+)
 
 EXPORT_PRODUCT_MAX_MIN_FIELDS = {
     "fields": {
@@ -44,8 +47,12 @@ def prepare_data_for_one_row(item, previous_products_max_min):
         "channel_name": listing.channel.name,
         "variant_sku": listing.variant.sku,
         "product_name": listing.variant.product.name,
-        "selling_unit": get_product_attribute_value(listing.variant, "selling_unit"),
-        "item_type": get_product_attribute_value(listing.variant, "item_type"),
+        "selling_unit": get_product_attribute_value(
+            listing.variant, "selling_unit", PRODUCT_ATTRIBUTE_SELLING_UNIT
+        ),
+        "item_type": get_product_attribute_value(
+            listing.variant, "item_type", PRODUCT_ATTRIBUTE_ITEM_TYPE
+        ),
         "current_product_class": get_product_class_metadata(
             listing.metadata, "current"
         ),
@@ -65,29 +72,23 @@ def get_product_class_metadata(metadata, type_content):
     product_class = metadata.get("product_class")
     if not product_class:
         return ""
-    current = product_class.get("current", None)
-    previous = product_class.get("previous", None)
-    if not current and type_content == "current":
+    data = product_class.get(type_content, None)
+    if not data:
         return ""
-    if not previous and type_content == "previous":
-        return ""
-    return json.dumps(current) if type_content == "current" else json.dumps(previous)
+    return json.dumps(data)
 
 
-def get_product_attribute_value(variant, field_attribute):
-    data = []
+def get_product_attribute_value(variant, field_attribute, attribute_key):
+    field = "unit"
     product = variant.product
-    assigned_products = AssignedProductAttribute.objects.filter(product_id=product.id)
-    if not assigned_products:
+    attribute = (
+        product.attributes.values("unit", "entity_type")
+        .filter(assignment__attribute__slug=attribute_key)
+        .first()
+    )
+    if not attribute:
         return ""
-    for item in assigned_products:
-        if field_attribute == "selling_unit":
-            unit = item.attribute.unit
-            if unit:
-                data.append(unit)
-        if field_attribute == "item_type":
-            entity_type = item.attribute.entity_type
-            if entity_type:
-                data.append(entity_type)
+    if field_attribute == "item_type":
+        field = "entity_type"
+    return attribute[field]
 
-    return json.dumps(data) if data else ""

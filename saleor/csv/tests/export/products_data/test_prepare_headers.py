@@ -227,7 +227,7 @@ def test_product_max_min_get_export_fields_and_headers_no_fields():
     assert file_headers == []
 
 
-def test_product_max_min_get_export_fields_and_headers_info(warehouses):
+def test_product_max_min_get_export_fields_and_headers_info():
     # given
     export_info = {
         "fields": [

@@ -413,7 +413,7 @@ def test_get_products_max_min_data(
     # given
     data = {
         "filter": {
-            "minLevel": 4,
+            "minLevel": {"lte": 4},
             "channelListing": {
                 "metadata": {"current": [{"key": "key_A"}]},
                 "channel": {"search": "Main Channel"},

@@ -1,5 +1,4 @@
 import django_filters
-import graphene
 from graphene_django.filter import GlobalIDMultipleChoiceFilter
 
 from saleor.graphql.core.filters import (
@@ -8,12 +7,21 @@ from saleor.graphql.core.filters import (
     filter_updated_at,
 )
 from saleor.graphql.core.types import FilterInputObjectType
-from saleor.graphql.core.types.common import DateTimeRangeInput
+from saleor.graphql.core.types.common import DateTimeRangeInput, IntRangeInput
 from saleor.graphql.product.filters_product_class import (
     ChannelListingFilter,
     ChannelListingFilterInput,
 )
+from saleor.graphql.utils.filters import filter_range_field
 from saleor.product_max_min.models import ProductMaxMin
+
+
+def filter_range_min_level(qs, _, value):
+    return filter_range_field(qs, "min_level", value)
+
+
+def filter_range_max_level(qs, _, value):
+    return filter_range_field(qs, "max_level", value)
 
 
 class ProductMaxMinFilter(django_filters.FilterSet):
@@ -26,8 +34,12 @@ class ProductMaxMinFilter(django_filters.FilterSet):
     updated_at = ObjectTypeFilter(
         input_class=DateTimeRangeInput, method=filter_updated_at
     )
-    min_level = graphene.Int(field_name="min_level")
-    max_level = graphene.Int(field_name="max_level")
+    min_level = ObjectTypeFilter(
+        input_class=IntRangeInput, method=filter_range_min_level
+    )
+    max_level = ObjectTypeFilter(
+        input_class=IntRangeInput, method=filter_range_max_level
+    )
     created_by_ids = GlobalIDMultipleChoiceFilter(field_name="created_by_id")
     updated_by_ids = GlobalIDMultipleChoiceFilter(field_name="updated_by_id")
     listing_ids = GlobalIDMultipleChoiceFilter(field_name="listing_id")
