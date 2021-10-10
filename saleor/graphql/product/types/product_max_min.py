@@ -6,6 +6,7 @@ from saleor.graphql.product.types import ProductVariantChannelListing
 
 from ....product_max_min import models
 from ...account.types import User
+from ..filters_product_max_min import BaseProductMaxMinFilter
 
 
 @key(fields="id")
@@ -53,10 +54,12 @@ class CurrentPreviousProductMaxMin(CountableDjangoObjectType):
 
     @staticmethod
     def resolve_product_max_min_previous(root: models.ProductMaxMin, _info, **_kwargs):
-        product_max_min = (
-            models.ProductMaxMin.objects.filter(listing_id=root.listing_id)
-            .exclude(id=root.id)
-            .order_by("-created_at")
-            .first()
-        )
-        return product_max_min
+        _, previous_ids = models.ProductMaxMin.objects.get_current_previous_ids()
+
+        product_max_min = models.ProductMaxMin.objects.filter(
+            listing_id=root.listing_id, id__in=previous_ids
+        ).order_by("-created_at")
+        product_max_min = BaseProductMaxMinFilter(
+            data=_info.variable_values.get("filter"), queryset=product_max_min
+        ).qs
+        return product_max_min.first()

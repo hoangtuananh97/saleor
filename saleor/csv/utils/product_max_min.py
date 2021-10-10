@@ -88,4 +88,3 @@ def get_product_attribute_value(variant, field_attribute, attribute_key):
     if not attribute:
         return ""
     return attribute[field_attribute]
-

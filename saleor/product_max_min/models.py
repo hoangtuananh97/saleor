@@ -37,6 +37,31 @@ class ProductMaxMinQueryset(models.QuerySet):
         product_max_min_ids, _ = self.get_data_after_group_partition()
         return self.filter(id__in=product_max_min_ids)
 
+    def get_current_previous_ids(self):
+        current_ids = []
+        previous_ids = []
+        products_max_min = ProductMaxMin.objects.values("listing_id", "id").order_by(
+            "listing_id", "-created_at"
+        )
+
+        ids_by_listing = {}
+        for item in products_max_min:
+            if (
+                item["listing_id"] in ids_by_listing
+                and len(ids_by_listing[item["listing_id"]]) == 2
+            ):
+                continue
+            if item["listing_id"] not in ids_by_listing.keys():
+                ids_by_listing[item["listing_id"]] = [item["id"]]
+            else:
+                ids_by_listing[item["listing_id"]].append(item["id"])
+
+        for _, value in ids_by_listing.items():
+            current_ids.append(value[0])
+            if len(value) > 1:
+                previous_ids.append(value[1])
+        return current_ids, previous_ids
+
 
 class ProductMaxMin(models.Model):
     listing = models.ForeignKey(
