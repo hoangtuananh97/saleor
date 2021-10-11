@@ -1,5 +1,6 @@
 from django.db import models
-from django.db.models.expressions import F, Window
+from django.db.models import Q
+from django.db.models.expressions import F, Subquery, Window
 from django.db.models.functions import RowNumber
 
 from saleor import settings
@@ -38,28 +39,14 @@ class ProductMaxMinQueryset(models.QuerySet):
         return self.filter(id__in=product_max_min_ids)
 
     def get_current_previous_ids(self):
-        current_ids = []
-        previous_ids = []
-        products_max_min = ProductMaxMin.objects.values("listing_id", "id").order_by(
-            "listing_id", "-created_at"
+        current_ids = self.distinct("listing_id").order_by("-listing_id", "-created_at")
+        previous_ids = (
+            self.distinct("listing_id")
+            .order_by("-listing_id", "-created_at")
+            .filter(~Q(id__in=Subquery(current_ids.values("id"))))
         )
-
-        ids_by_listing = {}
-        for item in products_max_min:
-            if (
-                item["listing_id"] in ids_by_listing
-                and len(ids_by_listing[item["listing_id"]]) == 2
-            ):
-                continue
-            if item["listing_id"] not in ids_by_listing.keys():
-                ids_by_listing[item["listing_id"]] = [item["id"]]
-            else:
-                ids_by_listing[item["listing_id"]].append(item["id"])
-
-        for _, value in ids_by_listing.items():
-            current_ids.append(value[0])
-            if len(value) > 1:
-                previous_ids.append(value[1])
+        current_ids = current_ids.values_list("id", flat=True)
+        previous_ids = previous_ids.values_list("id", flat=True)
         return current_ids, previous_ids
 
 
