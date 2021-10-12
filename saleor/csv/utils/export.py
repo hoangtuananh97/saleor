@@ -6,10 +6,14 @@ from typing import IO, TYPE_CHECKING, Any, Dict, List, Set, Union
 import petl as etl
 from django.utils import timezone
 
+from ...graphql.product.filters_product_max_min import ProductMaxMinFilter
 from ...product.models import Product
+from ...product_max_min.models import ProductMaxMin
 from .. import FileTypes
 from ..notifications import send_export_download_link_notification
+from . import product_max_min
 from .product_headers import get_export_fields_and_headers_info
+from .product_max_min import EXPORT_PRODUCT_MAX_MIN_FIELDS
 from .products_data import get_products_data
 
 if TYPE_CHECKING:
@@ -48,6 +52,73 @@ def export_products(
         file_type,
     )
 
+    save_csv_file_in_export_file(export_file, temporary_file, file_name)
+    temporary_file.close()
+
+    send_export_download_link_notification(export_file)
+
+
+def get_product_max_min_queryset(filters):
+    current_product_max_min_ids = []
+    previous_products_max_min = []
+    qs_group_partition = ProductMaxMin.objects.qs_group_partition()
+    for item in qs_group_partition:
+        if item.row_number > 2:
+            continue
+        if item.row_number == 1:
+            current_product_max_min_ids.append(item.id)
+        if item.row_number == 2:
+            previous_products_max_min.append(item)
+
+    queryset = ProductMaxMin.objects.qs_filter_current_previous().filter(
+        id__in=current_product_max_min_ids
+    )
+    ids = filters.get("ids")
+    filters = filters.get("filters")
+    if ids:
+        queryset = queryset.filter(pk__in=ids)
+    if filters:
+        queryset = ProductMaxMinFilter(data=filters, queryset=queryset).qs
+
+    return queryset.distinct().order_by("-created_at"), list(previous_products_max_min)
+
+
+def product_max_min_filter_to_export_headers(export_info):
+    export_fields = []
+    file_headers = []
+
+    fields = export_info.get("fields")
+    if not fields:
+        return export_fields, file_headers
+
+    for field in fields:
+        export_fields.append(field)
+        file_headers.append(EXPORT_PRODUCT_MAX_MIN_FIELDS["fields"][field])
+
+    return export_fields, file_headers
+
+
+def export_products_max_min(
+    export_file: "ExportFile",
+    scope: Dict[str, Union[str, dict]],
+    export_info: Dict[str, list],
+    file_type: str,
+    delimiter: str = ";",
+):
+    file_name = get_filename("product_max_min", file_type)
+    queryset, previous_products_max_min = get_product_max_min_queryset(scope)
+    export_fields, file_headers = product_max_min_filter_to_export_headers(export_info)
+    temporary_file = create_file_with_headers(file_headers, delimiter, file_type)
+    export_data = product_max_min.prepare_data_for_export(
+        queryset, previous_products_max_min
+    )
+    append_to_file(
+        export_data,
+        export_fields,
+        temporary_file,
+        file_type,
+        delimiter,
+    )
     save_csv_file_in_export_file(export_file, temporary_file, file_name)
     temporary_file.close()
 

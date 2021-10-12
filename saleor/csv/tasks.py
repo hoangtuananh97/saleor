@@ -5,7 +5,7 @@ from ..core import JobStatus
 from . import events
 from .models import ExportFile
 from .notifications import send_export_failed_info
-from .utils.export import export_products
+from .utils.export import export_products, export_products_max_min
 
 
 def on_task_failure(self, exc, task_id, args, kwargs, einfo):
@@ -48,3 +48,15 @@ def export_products_task(
 ):
     export_file = ExportFile.objects.get(pk=export_file_id)
     export_products(export_file, scope, export_info, file_type, delimiter)
+
+
+@app.task(on_success=on_task_success, on_failure=on_task_failure)
+def export_products_max_min_task(
+    export_file_id: int,
+    scope: Dict[str, Union[str, dict]],
+    export_info: Dict[str, list],
+    file_type: str,
+    delimiter: str = ";",
+):
+    export_file = ExportFile.objects.get(pk=export_file_id)
+    export_products_max_min(export_file, scope, export_info, file_type, delimiter)

@@ -31,6 +31,7 @@ from ..enums import (
     PluginErrorCode,
     ProductClassRecommendationErrorCode,
     ProductErrorCode,
+    ProductMaxMinErrorCode,
     ShippingErrorCode,
     ShopErrorCode,
     StockErrorCode,
@@ -471,3 +472,7 @@ class ProductClassRecommendationError(Error):
     code = ProductClassRecommendationErrorCode(
         description="The error code.", required=True
     )
+
+
+class ProductMaxMinError(Error):
+    code = ProductMaxMinErrorCode(description="The error code.", required=True)

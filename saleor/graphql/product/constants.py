@@ -1,0 +1,2 @@
+PRODUCT_ATTRIBUTE_SELLING_UNIT = "selling_unit_code"
+PRODUCT_ATTRIBUTE_ITEM_TYPE = "item_type_code"

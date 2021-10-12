@@ -20,6 +20,7 @@ from .payment.schema import PaymentMutations, PaymentQueries
 from .plugins.schema import PluginsMutations, PluginsQueries
 from .product.schema import (
     ProductClassRecommendationQueries,
+    ProductMaxMinQueries,
     ProductMutations,
     ProductQueries,
 )
@@ -54,6 +55,7 @@ class Query(
     WebhookQueries,
     CategoryCustomQueries,
     ProductClassRecommendationQueries,
+    ProductMaxMinQueries,
 ):
     pass
 

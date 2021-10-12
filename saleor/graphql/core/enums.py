@@ -28,6 +28,7 @@ from ...payment import error_codes as payment_error_codes
 from ...plugins import error_codes as plugin_error_codes
 from ...product import error_codes as product_error_codes
 from ...product_class import error_codes as product_class_error_codes
+from ...product_max_min import error_codes as product_max_min_error_codes
 from ...shipping import error_codes as shipping_error_codes
 from ...warehouse import error_codes as warehouse_error_codes
 from ...webhook import error_codes as webhook_error_codes
@@ -137,4 +138,7 @@ CategoryCustomErrorCode = graphene.Enum.from_enum(
 )
 ProductClassRecommendationErrorCode = graphene.Enum.from_enum(
     product_class_error_codes.ProductClassRecommendationErrorCode
+)
+ProductMaxMinErrorCode = graphene.Enum.from_enum(
+    product_max_min_error_codes.ProductMaxMinErrorCode
 )

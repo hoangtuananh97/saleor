@@ -3,19 +3,21 @@ from typing import Dict, List, Mapping, Union
 import graphene
 from django.core.exceptions import ValidationError
 
-from ...core.permissions import ProductPermissions
+from ...core.permissions import ProductMaxMinPermissions, ProductPermissions
 from ...csv import models as csv_models
 from ...csv.events import export_started_event
-from ...csv.tasks import export_products_task
+from ...csv.tasks import export_products_max_min_task, export_products_task
 from ..attribute.types import Attribute
 from ..channel.types import Channel
 from ..core.enums import ExportErrorCode
 from ..core.mutations import BaseMutation
 from ..core.types.common import ExportError
 from ..product.filters import ProductFilterInput
+from ..product.filters_product_max_min import ProductMaxMinFilterInput
 from ..product.types import Product
+from ..product.types.product_max_min import ProductMaxMin
 from ..warehouse.types import Warehouse
-from .enums import ExportScope, FileTypeEnum, ProductFieldEnum
+from .enums import ExportScope, FileTypeEnum, ProductFieldEnum, ProductMaxMinFieldEnum
 from .types import ExportFile
 
 
@@ -38,26 +40,39 @@ class ExportInfoInput(graphene.InputObjectType):
     )
 
 
-class ExportProductsInput(graphene.InputObjectType):
+class BaseExportProductsInput(graphene.InputObjectType):
     scope = ExportScope(
         description="Determine which products should be exported.", required=True
-    )
-    filter = ProductFilterInput(
-        description="Filtering options for products.", required=False
     )
     ids = graphene.List(
         graphene.NonNull(graphene.ID),
         description="List of products IDS to export.",
         required=False,
     )
+    file_type = FileTypeEnum(description="Type of exported file.", required=True)
+
+
+class ExportProductsInput(BaseExportProductsInput):
+    filter = ProductFilterInput(
+        description="Filtering options for products.", required=False
+    )
     export_info = ExportInfoInput(
         description="Input with info about fields which should be exported.",
         required=False,
     )
-    file_type = FileTypeEnum(description="Type of exported file.", required=True)
 
 
-class ExportProducts(BaseMutation):
+class ExportProductsMaxMinInput(BaseExportProductsInput):
+    filter = ProductMaxMinFilterInput(
+        description="Filtering options for products.", required=False
+    )
+    fields = graphene.List(
+        graphene.NonNull(ProductMaxMinFieldEnum),
+        description="List of product fields witch should be exported.",
+    )
+
+
+class BaseExportProducts(BaseMutation):
     export_file = graphene.Field(
         ExportFile,
         description=(
@@ -65,6 +80,54 @@ class ExportProducts(BaseMutation):
         ),
     )
 
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def perform_mutation(cls, root, info, **data):
+        raise NotImplementedError
+
+    @classmethod
+    def get_products_scope(cls, input) -> Mapping[str, Union[list, dict, str]]:
+        scope = input["scope"]
+        if scope == ExportScope.IDS.value:  # type: ignore
+            return cls.clean_ids(input)
+        elif scope == ExportScope.FILTER.value:  # type: ignore
+            return cls.clean_filter(input)
+        return {"all": ""}
+
+    @classmethod
+    def clean_ids(cls, input) -> Dict[str, List[str]]:
+        raise NotImplementedError
+
+    @staticmethod
+    def clean_filter(input) -> Dict[str, dict]:
+        filter = input.get("filter")
+        if not filter:
+            raise ValidationError(
+                {
+                    "filter": ValidationError(
+                        "You must provide filter input.",
+                        code=ExportErrorCode.REQUIRED.value,
+                    )
+                }
+            )
+        return {"filter": filter}
+
+    @classmethod
+    def get_export_info(cls, export_info_input):
+        raise NotImplementedError
+
+    @classmethod
+    def get_items_pks(cls, field, export_info_input, graphene_type):
+        ids = export_info_input.get(field)
+        if not ids:
+            return
+        pks = cls.get_global_ids_or_error(ids, only_type=graphene_type, field=field)
+        return pks
+
+
+class ExportProducts(BaseExportProducts):
     class Arguments:
         input = ExportProductsInput(
             required=True, description="Fields required to export product data"
@@ -94,15 +157,6 @@ class ExportProducts(BaseMutation):
         return cls(export_file=export_file)
 
     @classmethod
-    def get_products_scope(cls, input) -> Mapping[str, Union[list, dict, str]]:
-        scope = input["scope"]
-        if scope == ExportScope.IDS.value:  # type: ignore
-            return cls.clean_ids(input)
-        elif scope == ExportScope.FILTER.value:  # type: ignore
-            return cls.clean_filter(input)
-        return {"all": ""}
-
-    @classmethod
     def clean_ids(cls, input) -> Dict[str, List[str]]:
         ids = input.get("ids", [])
         if not ids:
@@ -116,20 +170,6 @@ class ExportProducts(BaseMutation):
             )
         pks = cls.get_global_ids_or_error(ids, only_type=Product, field="ids")
         return {"ids": pks}
-
-    @staticmethod
-    def clean_filter(input) -> Dict[str, dict]:
-        filter = input.get("filter")
-        if not filter:
-            raise ValidationError(
-                {
-                    "filter": ValidationError(
-                        "You must provide filter input.",
-                        code=ExportErrorCode.REQUIRED.value,
-                    )
-                }
-            )
-        return {"filter": filter}
 
     @classmethod
     def get_export_info(cls, export_info_input):
@@ -149,10 +189,57 @@ class ExportProducts(BaseMutation):
 
         return export_info
 
+
+class ExportProductsMaxMin(BaseExportProducts):
+    class Arguments:
+        input = ExportProductsMaxMinInput(
+            required=True, description="Fields required to export product max min data."
+        )
+
+    class Meta:
+        description = "Export products max min to csv file."
+        permissions = (ProductMaxMinPermissions.MANAGE_PRODUCT_MAX_MIN,)
+        error_type_class = ExportError
+        error_type_field = "export_errors"
+
     @classmethod
-    def get_items_pks(cls, field, export_info_input, graphene_type):
-        ids = export_info_input.get(field)
+    def perform_mutation(cls, root, info, **data):
+        input = data["input"]
+        scope = cls.get_products_scope(input)
+        export_info = cls.get_export_info(input)
+        file_type = input["file_type"]
+
+        app = info.context.app
+        kwargs = {"app": app} if app else {"user": info.context.user}
+
+        export_file = csv_models.ExportFile.objects.create(**kwargs)
+        export_started_event(export_file=export_file, **kwargs)
+        export_products_max_min_task.delay(
+            export_file.pk, scope, export_info, file_type
+        )
+
+        export_file.refresh_from_db()
+        return cls(export_file=export_file)
+
+    @classmethod
+    def clean_ids(cls, input) -> Dict[str, List[str]]:
+        ids = input.get("ids", [])
         if not ids:
-            return
-        pks = cls.get_global_ids_or_error(ids, only_type=graphene_type, field=field)
-        return pks
+            raise ValidationError(
+                {
+                    "ids": ValidationError(
+                        "You must provide at least one product max min id.",
+                        code=ExportErrorCode.REQUIRED.value,
+                    )
+                }
+            )
+        pks = cls.get_global_ids_or_error(ids, only_type=ProductMaxMin, field="ids")
+        return {"ids": pks}
+
+    @classmethod
+    def get_export_info(cls, export_info_input):
+        export_info = {}
+        fields = export_info_input.get("fields")
+        if fields:
+            export_info["fields"] = fields
+        return export_info

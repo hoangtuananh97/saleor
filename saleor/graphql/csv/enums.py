@@ -37,3 +37,18 @@ class ProductFieldEnum(graphene.Enum):
     VARIANT_SKU = "variant sku"
     VARIANT_WEIGHT = "variant weight"
     VARIANT_MEDIA = "variant media"
+
+
+class ProductMaxMinFieldEnum(graphene.Enum):
+    CHANNEL_SLUG = "channel_slug"
+    CHANNEL_NAME = "channel_name"
+    VARIANT_SKU = "variant_sku"
+    PRODUCT_NAME = "product_name"
+    SELLING_UNIT = "selling_unit"
+    ITEM_TYPE = "item_type"
+    CURRENT_PRODUCT_CLASS = "current_product_class"
+    PREVIOUS_PRODUCT_CLASS = "previous_product_class"
+    PREVIOUS_MIN_LEVEL = "previous_min_level"
+    PREVIOUS_MAX_LEVEL = "previous_max_level"
+    CURRENT_MIN_LEVEL = "current_min_level"
+    CURRENT_MAX_LEVEL = "current_max_level"

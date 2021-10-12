@@ -102,6 +102,7 @@ from ..product.models import (
 from ..product.tests.utils import create_image
 from ..product_class import ProductClassRecommendationStatus
 from ..product_class.models import ProductClassRecommendation
+from ..product_max_min.models import ProductMaxMin
 from ..shipping.models import (
     ShippingMethod,
     ShippingMethodChannelListing,
@@ -4707,6 +4708,11 @@ def permission_approve_product_class():
 
 
 @pytest.fixture
+def permission_manage_product_max_min():
+    return Permission.objects.get(codename="manage_product_max_min")
+
+
+@pytest.fixture
 def product_class_recommendation(db, staff_user, channel_variant_metadata):
     return ProductClassRecommendation.objects.create(
         listing_id=channel_variant.id,
@@ -4768,7 +4774,39 @@ def channel_variant_metadata(product, channel_USD) -> ProductVariantChannelListi
         price_amount=Decimal(10),
         cost_price_amount=Decimal(1),
         currency=channel_USD.currency_code,
-        metadata={"current": {"key_A": "value_A"}},
+        metadata={"product_class": {"current": {"key_A": "value_A"}}},
         private_metadata={"private_key": "private_value"},
     )
     return listing
+
+
+@pytest.fixture
+def product_max_min(db, staff_user, channel_variant_metadata):
+    return ProductMaxMin.objects.create(
+        listing_id=channel_variant_metadata.id,
+        max_level=10,
+        min_level=4,
+        created_by_id=staff_user.id,
+    )
+
+
+@pytest.fixture
+def products_max_min(db, staff_user, channel_variant_metadata):
+    return ProductMaxMin.objects.bulk_create(
+        [
+            ProductMaxMin(
+                listing_id=channel_variant_metadata.id,
+                max_level=10,
+                min_level=4,
+                created_by_id=staff_user.id,
+                created_at="2021-10-01T01:32:29.279226",
+            ),
+            ProductMaxMin(
+                listing_id=channel_variant_metadata.id,
+                max_level=9,
+                min_level=3,
+                created_by_id=staff_user.id,
+                created_at="2021-11-01T01:38:20.279226",
+            ),
+        ]
+    )

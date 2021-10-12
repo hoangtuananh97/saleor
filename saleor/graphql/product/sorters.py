@@ -281,3 +281,27 @@ class ProductClassRecommendationSortingInput(SortInputObjectType):
     class Meta:
         sort_enum = ProductClassRecommendationSortField
         type_name = "product class recommendation"
+
+
+class ProductMaxMinSortField(graphene.Enum):
+    MIN_LEVEL = ["min_level", "max_level"]
+    MAX_LEVEL = ["max_level", "min_level"]
+    DATETIME = ["created_at", "updated_at", "approved_at"]
+
+    @property
+    def description(self):
+        # pylint: disable=no-member
+        descriptions = {
+            ProductTypeSortField.MIN_LEVEL.name: "min_level",
+            ProductTypeSortField.MAX_LEVEL.name: "max_level",
+            ProductTypeSortField.DATETIME.name: "datetime",
+        }
+        if self.name in descriptions:
+            return f"Sort products by {descriptions[self.name]}."
+        raise ValueError("Unsupported enum value: %s" % self.value)
+
+
+class PProductCMaxMinSortingInput(SortInputObjectType):
+    class Meta:
+        sort_enum = ProductMaxMinSortField
+        type_name = "product max min"

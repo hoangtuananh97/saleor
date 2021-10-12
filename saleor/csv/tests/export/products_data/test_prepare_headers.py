@@ -1,6 +1,7 @@
 from .....attribute.models import Attribute
 from .....channel.models import Channel
 from .....graphql.csv.enums import ProductFieldEnum
+from ....utils.export import product_max_min_filter_to_export_headers
 from ....utils.product_headers import (
     get_attributes_headers,
     get_channels_headers,
@@ -217,3 +218,50 @@ def test_get_export_fields_and_headers_info(
     assert expected_file_headers == file_headers
     assert set(export_fields) == set(expected_fields)
     assert data_headers == excepted_headers
+
+
+def test_product_max_min_get_export_fields_and_headers_no_fields():
+    export_fields, file_headers = product_max_min_filter_to_export_headers({})
+
+    assert export_fields == []
+    assert file_headers == []
+
+
+def test_product_max_min_get_export_fields_and_headers_info():
+    # given
+    export_info = {
+        "fields": [
+            "channel_slug",
+            "channel_name",
+            "variant_sku",
+            "product_name",
+            "selling_unit",
+            "item_type",
+            "current_product_class",
+            "previous_product_class",
+            "previous_min_level",
+            "previous_max_level",
+            "current_min_level",
+            "current_max_level",
+        ],
+    }
+
+    expected_file_headers = [
+        "Channel Slug",
+        "Channel Name",
+        "Variant SKU",
+        "Product Name",
+        "Selling Unit",
+        "Item Type",
+        "Current Product Class Recommendation",
+        "Previous Product Class Recommendation",
+        "Previous Min Level",
+        "Previous Max Level",
+        "Current Min Level",
+        "Current Max Level",
+    ]
+
+    # when
+    export_fields, file_headers = product_max_min_filter_to_export_headers(export_info)
+    # then
+    assert expected_file_headers == file_headers
