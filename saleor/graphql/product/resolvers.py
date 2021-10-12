@@ -198,4 +198,5 @@ def resolve_product_max_min(pk):
 
 
 def resolve_current_previous_products_max_min(info, **kwargs):
-    return ProductMaxMin.objects.qs_filter_current_previous()
+    current_ids, _ = ProductMaxMin.objects.get_current_previous_ids()
+    return ProductMaxMin.objects.filter(id__in=current_ids)

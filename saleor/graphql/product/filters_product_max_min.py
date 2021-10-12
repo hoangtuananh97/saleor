@@ -24,10 +24,7 @@ def filter_range_max_level(qs, _, value):
     return filter_range_field(qs, "max_level", value)
 
 
-class ProductMaxMinFilter(django_filters.FilterSet):
-    channel_listing = ObjectTypeFilter(
-        input_class=ChannelListingFilterInput, method="filter_channel_listing"
-    )
+class BaseProductMaxMinFilter(django_filters.FilterSet):
     created_at = ObjectTypeFilter(
         input_class=DateTimeRangeInput, method=filter_created_at
     )
@@ -43,6 +40,23 @@ class ProductMaxMinFilter(django_filters.FilterSet):
     created_by_ids = GlobalIDMultipleChoiceFilter(field_name="created_by_id")
     updated_by_ids = GlobalIDMultipleChoiceFilter(field_name="updated_by_id")
     listing_ids = GlobalIDMultipleChoiceFilter(field_name="listing_id")
+
+    class Meta:
+        model = ProductMaxMin
+        fields = [
+            "min_level",
+            "max_level",
+            "created_at",
+            "updated_at",
+            "created_by_ids",
+            "updated_by_ids",
+        ]
+
+
+class ProductMaxMinFilter(BaseProductMaxMinFilter):
+    channel_listing = ObjectTypeFilter(
+        input_class=ChannelListingFilterInput, method="filter_channel_listing"
+    )
 
     class Meta:
         model = ProductMaxMin

@@ -1,5 +1,6 @@
 from django.db import models
-from django.db.models.expressions import F, Window
+from django.db.models import Q
+from django.db.models.expressions import F, Subquery, Window
 from django.db.models.functions import RowNumber
 
 from saleor import settings
@@ -36,6 +37,17 @@ class ProductMaxMinQueryset(models.QuerySet):
     def qs_filter_current_previous(self):
         product_max_min_ids, _ = self.get_data_after_group_partition()
         return self.filter(id__in=product_max_min_ids)
+
+    def get_current_previous_ids(self):
+        current_ids = self.distinct("listing_id").order_by("-listing_id", "-created_at")
+        previous_ids = (
+            self.distinct("listing_id")
+            .order_by("-listing_id", "-created_at")
+            .filter(~Q(id__in=Subquery(current_ids.values("id"))))
+        )
+        current_ids = current_ids.values_list("id", flat=True)
+        previous_ids = previous_ids.values_list("id", flat=True)
+        return current_ids, previous_ids
 
 
 class ProductMaxMin(models.Model):

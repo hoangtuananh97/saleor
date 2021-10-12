@@ -15,7 +15,6 @@ from ..core.enums import ReportingPeriod
 from ..core.fields import (
     ChannelContextFilterConnectionField,
     CurrentPreviousFilterConnectionField,
-    CurrentPreviousProductMaxMinFilterConnectionField,
     FilterInputConnectionField,
     PrefetchingConnectionField,
 )
@@ -475,15 +474,13 @@ class ProductMaxMinQueries(graphene.ObjectType):
         description="Product max min.",
     )
 
-    current_previous_products_max_min = (
-        CurrentPreviousProductMaxMinFilterConnectionField(
-            CurrentPreviousProductMaxMin,
-            filter=ProductMaxMinFilterInput(
-                description="Filtering options for product max min."
-            ),
-            sort_by=ProductMaxMinSortField(description="Sort product max min."),
-            description="List product max min.",
-        )
+    current_previous_products_max_min = FilterInputConnectionField(
+        CurrentPreviousProductMaxMin,
+        filter=ProductMaxMinFilterInput(
+            description="Filtering options for product max min."
+        ),
+        sort_by=ProductMaxMinSortField(description="Sort product max min."),
+        description="List product max min.",
     )
 
     @permission_required(ProductMaxMinPermissions.MANAGE_PRODUCT_MAX_MIN)
