@@ -71,9 +71,7 @@ DATABASES = {
     "default": dj_database_url.config(
         default="postgres://saleor:1234$@localhost:5432/saleor1", conn_max_age=600
     ),
-    "ai_db": dj_database_url.parse(
-        "sqlite:///ai_db.sqlite3", conn_max_age=600
-    )
+    "ai_db": dj_database_url.parse("sqlite:///ai_db.sqlite3", conn_max_age=600),
 }
 
 DATABASE_ROUTERS = ["saleor.core.database_router.AIDatabaseRouter"]
@@ -191,7 +189,7 @@ INSTALLED_APPS = [
     "django.contrib.postgres",
     "django_celery_beat",
     # Sync
-    "saleor_ai_db_sync",
+    "saleor_ai",
     # Local apps
     "saleor.plugins",
     "saleor.account",

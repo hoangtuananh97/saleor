@@ -1,5 +1,5 @@
 class AIDatabaseRouter:
-    ai_app_labels = ["saleor_ai_db_sync"]
+    ai_app_labels = ["saleor_ai"]
 
     def db_for_read(self, model, **hints):
         if model._meta.app_label in self.ai_app_labels:
