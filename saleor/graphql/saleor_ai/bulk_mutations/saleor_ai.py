@@ -111,19 +111,24 @@ class FileUploadSaleorAI(BaseMutation):
     @classmethod
     @traced_atomic_transaction()
     def perform_mutation(cls, _root, info, **data):
+        chunk_size = 1000
+        instances = []
         file_data = info.context.FILES.get(data["file"]).read()
         content = file_data.decode()
         csv_data = csv.reader(StringIO(content), delimiter=",")
         for row in csv_data:
             cls.read_one_row(row)
-
-        instances = cls.validate(_root, info, **data)
-        data = models.SaleorAI.objects.bulk_create(instances)
+            instances.append(cls.validate(_root, info, **data))
+            if len(instances) > chunk_size:
+                models.SaleorAI.objects.bulk_create(instances)
+                instances = []
+        if instances:
+            models.SaleorAI.objects.bulk_create(instances)
         return FileUploadSaleorAI(count=len(data))
 
     @classmethod
     def read_one_row(cls, row):
-        obj = {
+        return {
             "scgh_mch3_code": row[0],
             "scgh_mch3_desc": row[1],
             "scgh_mch2_code": row[2],
@@ -170,6 +175,17 @@ class FileUploadSaleorAI(BaseMutation):
             "start_of_week": row[43],
             "start_of_month": row[44],
         }
+
+    @classmethod
+    def validate(cls, _root, info, **data):
+        input_cls = SaleorAIInput
+        instance = models.SaleorAI()
+        cleaned_input = ModelMutation.clean_input(
+            info, instance, data, input_cls=input_cls
+        )
+        instance = cls.construct_instance(instance, cleaned_input)
+        cls.clean_instance(info, instance)
+        return instance
 
     @classmethod
     def check_one_row(cls, row):
