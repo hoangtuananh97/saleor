@@ -24,6 +24,7 @@ from .product.schema import (
     ProductMutations,
     ProductQueries,
 )
+from .saleor_ai.schema import SaleorAIMutations
 from .shipping.schema import ShippingMutations, ShippingQueries
 from .shop.schema import ShopMutations, ShopQueries
 from .translations.schema import TranslationQueries
@@ -83,6 +84,7 @@ class Mutation(
     WarehouseMutations,
     WebhookMutations,
     CategoryCustomMutations,
+    SaleorAIMutations,
 ):
     pass
 
