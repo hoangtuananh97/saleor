@@ -69,14 +69,14 @@ INTERNAL_IPS = get_list(os.environ.get("INTERNAL_IPS", "127.0.0.1"))
 
 DATABASES = {
     "default": dj_database_url.config(
-        default="postgres://postgres:1234$@localhost:5432/saleor", conn_max_age=600
+        default="postgres://saleor:1234$@localhost:5432/saleor1", conn_max_age=600
     ),
-    "db_ai": dj_database_url.parse(
-        "sqlite:///db_ai.sqlite3", conn_max_age=600
+    "ai_db": dj_database_url.parse(
+        "sqlite:///ai_db.sqlite3", conn_max_age=600
     )
 }
 
-DATABASE_ROUTERS = ["saleor.core.database_router.DatabaseAIRouter"]
+DATABASE_ROUTERS = ["saleor.core.database_router.AIDatabaseRouter"]
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
@@ -190,6 +190,8 @@ INSTALLED_APPS = [
     "django.contrib.auth",
     "django.contrib.postgres",
     "django_celery_beat",
+    # Sync
+    "saleor_ai_db_sync",
     # Local apps
     "saleor.plugins",
     "saleor.account",
@@ -228,8 +230,6 @@ INSTALLED_APPS = [
     "django_countries",
     "django_filters",
     "phonenumber_field",
-    # sync
-    "saleor_db_ai_sync"
 ]
 
 ENABLE_DJANGO_EXTENSIONS = get_bool_from_env("ENABLE_DJANGO_EXTENSIONS", False)

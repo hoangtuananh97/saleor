@@ -1,14 +1,14 @@
-class DatabaseAIRouter:
-    ai_app_labels = ["saleor_db_ai_sync"]
+class AIDatabaseRouter:
+    ai_app_labels = ["saleor_ai_db_sync"]
 
     def db_for_read(self, model, **hints):
         if model._meta.app_label in self.ai_app_labels:
-            return "db_ai"
+            return "ai_db"
         return "default"
 
     def db_for_write(self, model, **hints):
         if model._meta.app_label in self.ai_app_labels:
-            return "db_ai"
+            return "ai_db"
         return "default"
 
     def allow_relation(self, obj1, obj2, **hints):
@@ -21,5 +21,5 @@ class DatabaseAIRouter:
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
         if app_label in self.ai_app_labels:
-            return db == "db_ai"
-        return None
+            return db == "ai_db"
+        return True
