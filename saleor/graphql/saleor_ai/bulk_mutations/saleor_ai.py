@@ -3,6 +3,7 @@ from io import StringIO
 
 import graphene
 
+from saleor.core.permissions import AccountPermissions
 from saleor.core.tracing import traced_atomic_transaction
 from saleor.graphql.core.mutations import BaseMutation, ModelMutation
 from saleor.graphql.core.types import Upload
@@ -101,6 +102,7 @@ class FileUploadSaleorAI(BaseMutation):
     class Meta:
         description = "Upload saleor AI."
         # TODO : permissions tmp
+        permissions = (AccountPermissions.MANAGE_STAFF,)
         error_type_class = UploadError
         error_type_field = "upload_errors"
 
@@ -187,8 +189,7 @@ class FileUploadSaleorAI(BaseMutation):
         instance = models.SaleorAI()
         for _, value in data.items():
             if any(
-                    value == field_name for field_name, _ in
-                    input_cls._meta.fields.items()
+                value == field_name for field_name, _ in input_cls._meta.fields.items()
             ):
                 return
         cleaned_input = ModelMutation.clean_input(

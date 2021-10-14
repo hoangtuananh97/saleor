@@ -53,3 +53,6 @@ INSTALLED_APPS.append("saleor.tests")  # noqa: F405
 JWT_EXPIRE = True
 
 DEFAULT_CHANNEL_SLUG = "main"
+
+DATABASES.pop("ai_db")  # noqa: F405
+DATABASE_ROUTERS = []
