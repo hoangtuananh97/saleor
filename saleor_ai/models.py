@@ -17,10 +17,10 @@ class SaleorAI(models.Model):
     scgh_dc_stock = models.CharField(max_length=50, null=True, blank=True)
     scgh_show_no_stock_flag = models.CharField(max_length=10, null=True, blank=True)
     scgh_product_class = models.CharField(max_length=250, null=True, blank=True)
-    scgh_vmi_flag = models.CharField(max_length=10, null=True, blank=True)
-    scgh_showroom_flag = models.CharField(max_length=10, null=True, blank=True)
-    scgh_market_flag = models.CharField(max_length=10, null=True, blank=True)
-    scgh_shop_flag = models.CharField(max_length=10, null=True, blank=True)
+    scgh_vmi_flag = models.BooleanField(default=False)
+    scgh_showroom_flag = models.BooleanField(default=False)
+    scgh_market_flag = models.BooleanField(default=False)
+    scgh_shop_flag = models.BooleanField(default=False)
     sales_uom = models.CharField(max_length=10, null=True, blank=True)
     sales_price = models.DecimalField(
         max_digits=21,

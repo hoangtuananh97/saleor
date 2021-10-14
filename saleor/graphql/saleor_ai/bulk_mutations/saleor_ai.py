@@ -123,12 +123,12 @@ class FileUploadSaleorAI(BaseMutation):
             if instance:
                 instances.append(instance)
             if len(instances) > chunk_size:
-                models.SaleorAI.objects.bulk_create(instances)
-                count = count + len(instances)
+                objs = models.SaleorAI.objects.bulk_create(instances)
+                count = count + len(objs)
                 instances = []
         if instances:
-            models.SaleorAI.objects.bulk_create(instances)
-            count = count + len(instances)
+            objs = models.SaleorAI.objects.bulk_create(instances)
+            count = count + len(objs)
         return FileUploadSaleorAI(count=count)
 
     @classmethod
@@ -149,10 +149,10 @@ class FileUploadSaleorAI(BaseMutation):
             "scgh_dc_stock": row[12],
             "scgh_show_no_stock_flag": row[13],
             "scgh_product_class": row[14],
-            "scgh_vmi_flag": row[15],
-            "scgh_showroom_flag": row[16],
-            "scgh_market_flag": row[17],
-            "scgh_shop_flag": row[18],
+            "scgh_vmi_flag": True if row[15] == "X" else False,
+            "scgh_showroom_flag": True if row[16] == "X" else False,
+            "scgh_market_flag": True if row[17] == "X" else False,
+            "scgh_shop_flag": True if row[18] == "X" else False,
             "sales_uom": row[19],
             "sales_price": row[20],
             "purchase_uom": row[21],
@@ -187,7 +187,8 @@ class FileUploadSaleorAI(BaseMutation):
         instance = models.SaleorAI()
         for _, value in data.items():
             if any(
-                value == field_name for field_name, _ in input_cls._meta.fields.items()
+                    value == field_name for field_name, _ in
+                    input_cls._meta.fields.items()
             ):
                 return
         cleaned_input = ModelMutation.clean_input(
@@ -196,7 +197,3 @@ class FileUploadSaleorAI(BaseMutation):
         instance = cls.construct_instance(instance, cleaned_input)
         cls.clean_instance(info, instance)
         return instance
-
-    @classmethod
-    def check_one_row(cls, row):
-        pass
