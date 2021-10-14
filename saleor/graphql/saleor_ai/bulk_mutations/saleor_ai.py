@@ -4,7 +4,7 @@ from io import StringIO
 import graphene
 
 from saleor.core.tracing import traced_atomic_transaction
-from saleor.graphql.core.mutations import ModelMutation, BaseMutation
+from saleor.graphql.core.mutations import BaseMutation, ModelMutation
 from saleor.graphql.core.types import Upload
 from saleor.graphql.core.types.common import UploadError
 from saleor_ai import models
@@ -113,18 +113,23 @@ class FileUploadSaleorAI(BaseMutation):
     def perform_mutation(cls, _root, info, **data):
         chunk_size = 1000
         instances = []
+        count = 0
         file_data = info.context.FILES.get(data["file"]).read()
         content = file_data.decode()
         csv_data = csv.reader(StringIO(content), delimiter=",")
         for row in csv_data:
-            cls.read_one_row(row)
-            instances.append(cls.validate(_root, info, **data))
+            data = cls.read_one_row(row)
+            instance = cls.validate(_root, info, **data)
+            if instance:
+                instances.append(instance)
             if len(instances) > chunk_size:
                 models.SaleorAI.objects.bulk_create(instances)
+                count = count + len(instances)
                 instances = []
         if instances:
             models.SaleorAI.objects.bulk_create(instances)
-        return FileUploadSaleorAI(count=len(data))
+            count = count + len(instances)
+        return FileUploadSaleorAI(count=count)
 
     @classmethod
     def read_one_row(cls, row):
@@ -180,6 +185,11 @@ class FileUploadSaleorAI(BaseMutation):
     def validate(cls, _root, info, **data):
         input_cls = SaleorAIInput
         instance = models.SaleorAI()
+        for _, value in data.items():
+            if any(
+                value == field_name for field_name, _ in input_cls._meta.fields.items()
+            ):
+                return
         cleaned_input = ModelMutation.clean_input(
             info, instance, data, input_cls=input_cls
         )

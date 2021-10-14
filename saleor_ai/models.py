@@ -1,7 +1,5 @@
 from django.db import models
 
-from saleor import settings
-
 
 class SaleorAI(models.Model):
     scgh_mch3_code = models.CharField(max_length=5, null=True, blank=True)
@@ -24,11 +22,15 @@ class SaleorAI(models.Model):
     scgh_market_flag = models.CharField(max_length=10, null=True, blank=True)
     scgh_shop_flag = models.CharField(max_length=10, null=True, blank=True)
     sales_uom = models.CharField(max_length=10, null=True, blank=True)
-    sales_price = models.IntegerField(default=0, null=True, blank=True)
+    sales_price = models.DecimalField(
+        max_digits=21,
+        decimal_places=12,
+        default=0,
+    )
     purchase_uom = models.CharField(max_length=10, null=True, blank=True)
     purchase_price = models.DecimalField(
-        max_digits=settings.DEFAULT_MAX_DIGITS,
-        decimal_places=settings.DEFAULT_DECIMAL_PLACES,
+        max_digits=21,
+        decimal_places=12,
         default=0,
     )
     purchase_group = models.CharField(max_length=10, null=True, blank=True)
@@ -44,8 +46,8 @@ class SaleorAI(models.Model):
     actual_sales_value = models.IntegerField(default=0)
     actual_sales_qty = models.IntegerField(default=0)
     forecast_value = models.DecimalField(
-        max_digits=settings.DEFAULT_MAX_DIGITS,
-        decimal_places=settings.DEFAULT_DECIMAL_PLACES,
+        max_digits=21,
+        decimal_places=12,
         default=0,
     )
     forecast_qty = models.IntegerField(default=0)
