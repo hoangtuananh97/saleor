@@ -50,26 +50,31 @@ class Command(BaseCommand):
         data_product_class = []
         data_max_min = []
         saleor_ai = SaleorAI.objects.values(
-            "article_code", "franchise_code", "min_qty", "max_qty", "start_of_week",
-            "product_class_qty", "product_class_value", "product_class_default"
+            "article_code",
+            "franchise_code",
+            "min_qty",
+            "max_qty",
+            "start_of_week",
+            "product_class_qty",
+            "product_class_value",
+            "product_class_default",
         ).all()
         for item in saleor_ai:
             group_data = {
-                "min_qty": item['min_qty'],
-                "max_qty": item['max_qty'],
-                "product_class_qty": item['product_class_qty'],
-                "product_class_value": item['product_class_value'],
-                "product_class_recommendation": item['product_class_default'],
-                "created_at": item['start_of_week'],
+                "min_qty": item["min_qty"],
+                "max_qty": item["max_qty"],
+                "product_class_qty": item["product_class_qty"],
+                "product_class_value": item["product_class_value"],
+                "product_class_recommendation": item["product_class_default"],
+                "created_at": item["start_of_week"],
             }
             group_saleor_ai.setdefault(
-                (item['article_code'], item['franchise_code']), list()
+                (item["article_code"], item["franchise_code"]), list()
             ).append(group_data)
 
         for key, values in group_saleor_ai.items():
             listing = ProductVariantChannelListing.objects.filter(
-                variant__sku=key[0],
-                channel__slug=key[1]
+                variant__sku=key[0], channel__slug=key[1]
             ).first()
             value = values[0]
 
