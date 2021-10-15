@@ -1,5 +1,8 @@
-from saleor.graphql.tests.utils import get_graphql_content, get_multipart_request_body, \
-    assert_no_permission
+from saleor.graphql.tests.utils import (
+    assert_no_permission,
+    get_graphql_content,
+    get_multipart_request_body,
+)
 from saleor.product.tests.utils import create_csv_file_with_saleor_ai
 
 QUERY_IMPORT = """
@@ -12,14 +15,12 @@ mutation FileUploadSaleorAI($file:Upload!) {
 
 
 def test_file_upload_saleor_ai_by_staff(
-        staff_api_client, site_settings, media_root, permission_manage_staff
+    staff_api_client, site_settings, media_root, permission_manage_staff
 ):
     # given
     data_file, file_name = create_csv_file_with_saleor_ai()
     variables = {"file": file_name}
-    body = get_multipart_request_body(
-        QUERY_IMPORT, variables, data_file, file_name
-    )
+    body = get_multipart_request_body(QUERY_IMPORT, variables, data_file, file_name)
 
     # when
     response = staff_api_client.post_multipart(
@@ -39,9 +40,7 @@ def test_file_upload_saleor_ai_no_permission(
     # give
     data_file, file_name = create_csv_file_with_saleor_ai()
     variables = {"file": file_name}
-    body = get_multipart_request_body(
-        QUERY_IMPORT, variables, data_file, file_name
-    )
+    body = get_multipart_request_body(QUERY_IMPORT, variables, data_file, file_name)
     # when
     response = staff_api_client.post_multipart(body)
 

@@ -1,7 +1,10 @@
 from django.db import models
 from django.db.models import Q
-from django.db.models.expressions import F, Subquery, Window
-from django.db.models.functions import RowNumber
+from django.db.models.expressions import F, OuterRef, Subquery, Window
+from django.db.models.functions import (  # type: ignore[attr-defined]
+    JSONObject,
+    RowNumber,
+)
 
 from saleor import settings
 from saleor.core.permissions import ProductMaxMinPermissions
@@ -49,6 +52,44 @@ class ProductMaxMinQueryset(models.QuerySet):
         previous_ids = previous_ids.values_list("id", flat=True)
         return current_ids, previous_ids
 
+    def qs_filter_current_previous_one_query(self):
+        queryset = self.all()
+        queryset = (
+            queryset.annotate(
+                latest_id=Subquery(
+                    queryset.filter(
+                        listing=OuterRef("listing"),
+                    )
+                    .values("listing")
+                    .order_by("-created_at")
+                    .values("pk")[:1]
+                ),
+                current_version=JSONObject(
+                    min_level=F("min_level"),
+                    max_level=F("max_level"),
+                ),
+                previous_version=Subquery(
+                    queryset.filter(
+                        listing=OuterRef("listing"),
+                        id__lt=OuterRef("latest_id"),
+                    )
+                    .annotate(
+                        json_values=JSONObject(
+                            min_level=F("min_level"),
+                            max_level=F("max_level"),
+                        )
+                    )
+                    .order_by("-created_at")
+                    .values("json_values")[:1]
+                ),
+            )
+            .filter(
+                id=F("latest_id"),
+            )
+            .values("listing_id", "current_version", "previous_version")
+        )
+        return queryset
+
 
 class ProductMaxMin(models.Model):
     listing = models.ForeignKey(
@@ -72,7 +113,7 @@ class ProductMaxMin(models.Model):
         blank=True,
         null=True,
     )
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
 
     objects = models.Manager.from_queryset(ProductMaxMinQueryset)()
