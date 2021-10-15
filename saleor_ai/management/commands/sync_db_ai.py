@@ -54,7 +54,7 @@ class Command(BaseCommand):
             "product_class_qty", "product_class_value", "product_class_default"
         ).all()
         for item in saleor_ai:
-            product_max_min = {
+            group_data = {
                 "min_qty": item['min_qty'],
                 "max_qty": item['max_qty'],
                 "product_class_qty": item['product_class_qty'],
@@ -64,7 +64,7 @@ class Command(BaseCommand):
             }
             group_saleor_ai.setdefault(
                 (item['article_code'], item['franchise_code']), list()
-            ).append(product_max_min)
+            ).append(group_data)
 
         for key, values in group_saleor_ai.items():
             listing = ProductVariantChannelListing.objects.filter(
