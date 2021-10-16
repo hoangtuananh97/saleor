@@ -94,3 +94,27 @@ class ExportFile(CountableDjangoObjectType):
     @staticmethod
     def resolve_events(root: models.ExportFile, _info):
         return root.events.all().order_by("pk")
+
+
+class ImportFile(CountableDjangoObjectType):
+    events = graphene.List(
+        graphene.NonNull(ExportEvent),
+        description="List of events associated with the import.",
+    )
+
+    class Meta:
+        description = "Represents a job data of imported file."
+        interfaces = [graphene.relay.Node, Job]
+        model = models.ImportFile
+        only_fields = ["id", "user", ]
+
+    @staticmethod
+    def resolve_user(root: models.ExportFile, info):
+        requestor = get_user_or_app_from_context(info.context)
+        if requestor_has_access(requestor, root.user, AccountPermissions.MANAGE_STAFF):
+            return root.user
+        raise PermissionDenied()
+
+    @staticmethod
+    def resolve_events(root: models.ExportFile, _info):
+        return root.events.all().order_by("pk")

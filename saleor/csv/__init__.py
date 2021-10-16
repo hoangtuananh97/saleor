@@ -32,3 +32,29 @@ class FileTypes:
         (CSV, "Plain CSV file."),
         (XLSX, "Excel XLSX file."),
     ]
+
+
+class ImportEvents:
+    """The different import csv events types."""
+
+    IMPORT_PENDING = "import_pending"
+    IMPORT_SUCCESS = "import_success"
+    IMPORT_FAILED = "import_failed"
+    IMPORT_DELETED = "import_deleted"
+    IMPORTED_FILE_SENT = "imported_file_sent"
+    IMPORT_FAILED_INFO_SENT = "import_failed_info_sent"
+
+    CHOICES = [
+        (IMPORT_PENDING, "Data import was started."),
+        (IMPORT_SUCCESS, "Data import was completed successfully."),
+        (IMPORT_FAILED, "Data import failed."),
+        (IMPORT_DELETED, "Import file was deleted."),
+        (
+            IMPORTED_FILE_SENT,
+            "Email with notify was sent to the customer.",
+        ),
+        (
+            IMPORT_FAILED_INFO_SENT,
+            "Email with info that import failed was sent to the customer.",
+        ),
+    ]
