@@ -34,7 +34,8 @@ class Command(BaseSyncSaleorAICommand):
 
     def handle(self, *args, **options):
         group_saleor_ai, listing_dict = self.data_group_saleor_ai(**options)
-        instance = ProductMaxMin()
-        model = ProductMaxMin
-        self.bulk_create(instance, model, group_saleor_ai, listing_dict)
-        self.update_metadata()
+        if group_saleor_ai:
+            instance = ProductMaxMin()
+            model = ProductMaxMin
+            self.bulk_create(instance, model, group_saleor_ai, listing_dict)
+            self.update_metadata()

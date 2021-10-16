@@ -35,7 +35,8 @@ class Command(BaseSyncSaleorAICommand):
 
     def handle(self, *args, **options):
         group_saleor_ai, listing_dict = self.data_group_saleor_ai(**options)
-        instance = ProductClassRecommendation()
-        model = ProductClassRecommendation
-        self.bulk_create(instance, model, group_saleor_ai, listing_dict)
-        self.update_metadata()
+        if group_saleor_ai:
+            instance = ProductClassRecommendation()
+            model = ProductClassRecommendation
+            self.bulk_create(instance, model, group_saleor_ai, listing_dict)
+            self.update_metadata()

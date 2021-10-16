@@ -105,6 +105,8 @@ class BaseSyncSaleorAICommand(BaseCommand):
         for key, values in group_saleor_ai.items():
             sku = key[0]
             slug = key[1]
+            if len(listing_dict) > 0 and f"{sku}{slug}" not in listing_dict.keys:
+                continue
             listing = listing_dict[f"{sku}{slug}"]
             value = values[0]
             obj_insert = self.prepare_data_one_row(listing, value)
