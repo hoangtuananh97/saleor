@@ -43,43 +43,37 @@ class ProductClassesQueryset(models.QuerySet):
 
     def qs_filter_current_previous_one_query(self):
         queryset = self.all()
-        queryset = (
-            queryset.annotate(
-                latest_id=Subquery(
-                    queryset.filter(
-                        listing=OuterRef("listing"),
+        queryset = queryset.annotate(
+            latest_id=Subquery(
+                queryset.filter(
+                    listing=OuterRef("listing"),
+                )
+                .values("listing")
+                .order_by("-created_at")
+                .values("pk")[:1]
+            ),
+            current_version=JSONObject(
+                product_class_qty=F("product_class_qty"),
+                product_class_value=F("product_class_value"),
+                product_class_recommendation=F("product_class_recommendation"),
+            ),
+            previous_version=Subquery(
+                queryset.filter(
+                    listing=OuterRef("listing"),
+                    id__lt=OuterRef("latest_id"),
+                )
+                .annotate(
+                    json_values=JSONObject(
+                        product_class_qty=F("product_class_qty"),
+                        product_class_value=F("product_class_value"),
+                        product_class_recommendation=F("product_class_recommendation"),
                     )
-                    .values("listing")
-                    .order_by("-created_at")
-                    .values("pk")[:1]
-                ),
-                current_version=JSONObject(
-                    product_class_qty=F("product_class_qty"),
-                    product_class_value=F("product_class_value"),
-                    product_class_recommendation=F("product_class_recommendation"),
-                ),
-                previous_version=Subquery(
-                    queryset.filter(
-                        listing=OuterRef("listing"),
-                        id__lt=OuterRef("latest_id"),
-                    )
-                    .annotate(
-                        json_values=JSONObject(
-                            product_class_qty=F("product_class_qty"),
-                            product_class_value=F("product_class_value"),
-                            product_class_recommendation=F(
-                                "product_class_recommendation"
-                            ),
-                        )
-                    )
-                    .order_by("-created_at")
-                    .values("json_values")[:1]
-                ),
-            )
-            .filter(
-                id=F("latest_id"),
-            )
-            .values("listing_id", "current_version", "previous_version")
+                )
+                .order_by("-created_at")
+                .values("json_values")[:1]
+            ),
+        ).filter(
+            id=F("latest_id"),
         )
         return queryset
 

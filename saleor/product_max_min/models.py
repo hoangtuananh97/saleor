@@ -54,39 +54,35 @@ class ProductMaxMinQueryset(models.QuerySet):
 
     def qs_filter_current_previous_one_query(self):
         queryset = self.all()
-        queryset = (
-            queryset.annotate(
-                latest_id=Subquery(
-                    queryset.filter(
-                        listing=OuterRef("listing"),
+        queryset = queryset.annotate(
+            latest_id=Subquery(
+                queryset.filter(
+                    listing=OuterRef("listing"),
+                )
+                .values("listing")
+                .order_by("-created_at")
+                .values("pk")[:1]
+            ),
+            current_version=JSONObject(
+                min_level=F("min_level"),
+                max_level=F("max_level"),
+            ),
+            previous_version=Subquery(
+                queryset.filter(
+                    listing=OuterRef("listing"),
+                    id__lt=OuterRef("latest_id"),
+                )
+                .annotate(
+                    json_values=JSONObject(
+                        min_level=F("min_level"),
+                        max_level=F("max_level"),
                     )
-                    .values("listing")
-                    .order_by("-created_at")
-                    .values("pk")[:1]
-                ),
-                current_version=JSONObject(
-                    min_level=F("min_level"),
-                    max_level=F("max_level"),
-                ),
-                previous_version=Subquery(
-                    queryset.filter(
-                        listing=OuterRef("listing"),
-                        id__lt=OuterRef("latest_id"),
-                    )
-                    .annotate(
-                        json_values=JSONObject(
-                            min_level=F("min_level"),
-                            max_level=F("max_level"),
-                        )
-                    )
-                    .order_by("-created_at")
-                    .values("json_values")[:1]
-                ),
-            )
-            .filter(
-                id=F("latest_id"),
-            )
-            .values("listing_id", "current_version", "previous_version")
+                )
+                .order_by("-created_at")
+                .values("json_values")[:1]
+            ),
+        ).filter(
+            id=F("latest_id"),
         )
         return queryset
 
