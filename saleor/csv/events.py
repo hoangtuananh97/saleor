@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 
 from . import ExportEvents, ImportEvents
-from .models import ExportEvent, ImportFile, ImportEvent
+from .models import ExportEvent, ImportEvent, ImportFile
 
 if TYPE_CHECKING:
     from ..account.models import User
@@ -70,28 +70,20 @@ def export_failed_info_sent_event(*, export_file_id: int, user_id: int):
     )
 
 
-def import_started_event(
-    *, import_file: "ImportFile", user: UserType = None
-):
+def import_started_event(*, import_file: "ImportFile", user: UserType = None):
     ImportEvent.objects.create(
         import_file=import_file, user=user, type=ImportEvents.IMPORT_PENDING
     )
 
 
-def import_success_event(
-    *, import_file: "ImportFile", user: UserType = None
-):
+def import_success_event(*, import_file: "ImportFile", user: UserType = None):
     ImportEvent.objects.create(
         import_file=import_file, user=user, type=ImportEvents.IMPORT_SUCCESS
     )
 
 
 def import_failed_event(
-    *,
-    import_file: "ImportFile",
-    user: UserType = None,
-    message: str,
-    error_type: str
+    *, import_file: "ImportFile", user: UserType = None, message: str, error_type: str
 ):
     ImportEvent.objects.create(
         import_file=import_file,
@@ -101,9 +93,7 @@ def import_failed_event(
     )
 
 
-def import_deleted_event(
-    *, import_file: "ImportFile", user: UserType = None
-):
+def import_deleted_event(*, import_file: "ImportFile", user: UserType = None):
     ImportEvent.objects.create(
         import_file=import_file, user=user, type=ImportEvents.IMPORT_DELETED
     )

@@ -49,7 +49,7 @@ class ImportEvent(models.Model):
     date = models.DateTimeField(default=timezone.now, editable=False)
     type = models.CharField(max_length=255, choices=ImportEvents.CHOICES)
     parameters = JSONField(blank=True, default=dict, encoder=CustomJsonEncoder)
-    export_file = models.ForeignKey(
+    import_file = models.ForeignKey(
         ImportFile, related_name="import_events", on_delete=models.CASCADE
     )
     user = models.ForeignKey(

@@ -1,9 +1,10 @@
 import graphene
 
-from ...csv import ExportEvents, FileTypes
+from ...csv import ExportEvents, FileTypes, ImportEvents
 from ...graphql.core.enums import to_enum
 
 ExportEventEnum = to_enum(ExportEvents)
+ImportEventEnum = to_enum(ImportEvents)
 FileTypeEnum = to_enum(FileTypes)
 
 

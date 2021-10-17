@@ -5,7 +5,7 @@ from ..core.fields import FilterInputConnectionField
 from ..core.utils import from_global_id_or_error
 from ..decorators import permission_required
 from .filters import ExportFileFilterInput
-from .mutations import ExportProducts, ExportProductsMaxMin
+from .mutations import ExportProducts, ExportProductsMaxMin, ImportSaleorAI
 from .resolvers import resolve_export_file, resolve_export_files
 from .sorters import ExportFileSortingInput
 from .types import ExportFile
@@ -39,3 +39,4 @@ class CsvQueries(graphene.ObjectType):
 class CsvMutations(graphene.ObjectType):
     export_products = ExportProducts.Field()
     export_products_max_min = ExportProductsMaxMin.Field()
+    import_saleor_ai = ImportSaleorAI.Field()

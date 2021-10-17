@@ -1,23 +1,29 @@
 import csv
+from io import StringIO
 from typing import Dict, List, Mapping, Union
 
 import graphene
 from django.core.exceptions import ValidationError
-from io import StringIO
 
 from saleor_ai.models import SaleorAI
-from ..core.types import Upload
-from ..saleor_ai.bulk_mutations.saleor_ai import SaleorAIInput
-from ...core.permissions import ProductMaxMinPermissions, ProductPermissions, \
-    AccountPermissions
+
+from ...core.permissions import (
+    AccountPermissions,
+    ProductMaxMinPermissions,
+    ProductPermissions,
+)
 from ...csv import models as csv_models
-from ...csv.events import export_started_event, import_started_event
-from ...csv.tasks import export_products_max_min_task, export_products_task, \
-    import_saleor_ai_task
+from ...csv.events import export_started_event
+from ...csv.tasks import (
+    export_products_max_min_task,
+    export_products_task,
+    import_saleor_ai_task,
+)
 from ..attribute.types import Attribute
 from ..channel.types import Channel
 from ..core.enums import ExportErrorCode
-from ..core.mutations import BaseMutation, ModelMutation
+from ..core.mutations import BaseMutation
+from ..core.types import Upload
 from ..core.types.common import ExportError, UploadError
 from ..product.filters import ProductFilterInput
 from ..product.filters_product_max_min import ProductMaxMinFilterInput
@@ -25,7 +31,7 @@ from ..product.types import Product
 from ..product.types.product_max_min import ProductMaxMin
 from ..warehouse.types import Warehouse
 from .enums import ExportScope, FileTypeEnum, ProductFieldEnum, ProductMaxMinFieldEnum
-from .types import ExportFile
+from .types import ExportFile, ImportFile
 
 
 class ExportInfoInput(graphene.InputObjectType):
@@ -254,7 +260,7 @@ class ExportProductsMaxMin(BaseExportProducts):
 
 class ImportSaleorAI(BaseMutation):
     import_file = graphene.Field(
-        ExportFile,
+        ImportFile,
         description=(
             "The newly created import file job which is responsible for import data."
         ),
@@ -277,25 +283,20 @@ class ImportSaleorAI(BaseMutation):
         batch_data = []
         model = SaleorAI
         opts = model._meta
+        user = {
+            "user": info.context.user,
+        }
         file_data = info.context.FILES.get(kwargs["file"]).read()
         content = file_data.decode()
         csv_data = csv.reader(StringIO(content), delimiter=",")
-        import_file = csv_models.ImportFile.objects.create(**kwargs)
+        import_file = csv_models.ImportFile.objects.create(**user)
         for row in csv_data:
             data = cls.read_one_row(row)
             for _, value in data.items():
-                if any(
-                        value == field.name for field in opts.fields
-                ):
+                if any(value == field.name for field in opts.fields):
                     continue
             batch_data.append(row)
-            if len(batch_data) > batch_size:
-                import_saleor_ai_task.delay(import_file.pk, batch_data, batch_size)
-                import_started_event(import_file=import_file, **kwargs)
-                batch_data = []
-        if batch_data:
-            import_saleor_ai_task.delay(import_file.pk, batch_data, batch_size)
-            import_started_event(import_file=import_file, **kwargs)
+        import_saleor_ai_task.delay(import_file.pk, batch_data, user, batch_size).get()
 
         import_file.refresh_from_db()
         return cls(import_file=import_file)

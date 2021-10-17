@@ -1,12 +1,15 @@
 from typing import Dict, Union
 
-from .utils.import_csv import import_saleor_ai
+from celery import chord
+
 from ..celeryconf import app
 from ..core import JobStatus
 from . import events
+from .events import import_started_event
 from .models import ExportFile, ImportFile
 from .notifications import send_export_failed_info
 from .utils.export import export_products, export_products_max_min
+from .utils.import_csv import import_saleor_ai
 
 
 def on_task_failure(self, exc, task_id, args, kwargs, einfo):
@@ -69,9 +72,7 @@ def on_task_import_success(self, retval, task_id, args, kwargs):
     import_file = ImportFile.objects.get(pk=import_file_id)
     import_file.status = JobStatus.SUCCESS
     import_file.save(update_fields=["status", "updated_at"])
-    events.import_success_event(
-        import_file=import_file, user=import_file.user
-    )
+    events.import_success_event(import_file=import_file, user=import_file.user)
 
 
 def on_task_import_failure(self, exc, task_id, args, kwargs, einfo):
@@ -92,11 +93,43 @@ def on_task_import_failure(self, exc, task_id, args, kwargs, einfo):
     send_export_failed_info(import_file)
 
 
-@app.task(on_success=on_task_import_success, on_failure=on_task_import_failure)
+@app.task()
 def import_saleor_ai_task(
     import_file_id: int,
-    batch_data,
+    data,
+    user,
     batch_size,
 ):
+    batch_data = []
+    group_batch_data = []
     import_file = ImportFile.objects.get(pk=import_file_id)
-    import_saleor_ai(import_file, batch_data, batch_size)
+    for item in data:
+        batch_data.append(item)
+        if len(batch_data) > batch_size:
+            group_batch_data.append(batch_data)
+            import_started_event(import_file=import_file, **user)
+            batch_data = []
+    if batch_data:
+        group_batch_data.append(batch_data)
+        import_started_event(import_file=import_file, **user)
+
+    return chord(
+        import_saleor_ai_sub_task.s(import_file, item, batch_size, user)
+        for item in group_batch_data
+    )(import_saleor_ai_result.s(import_file, user))
+
+
+@app.task()
+def import_saleor_ai_sub_task(import_file, batch_data, user, batch_size):
+    return import_saleor_ai(import_file, batch_data, user, batch_size)
+
+
+@app.task()
+def import_saleor_ai_result(result_error, import_file, user):
+    if not result_error:
+        import_file = ImportFile.objects.get(pk=import_file.id)
+        import_file.status = JobStatus.SUCCESS
+        import_file.save(update_fields=["status", "updated_at"])
+        events.import_success_event(import_file=import_file, user=import_file.user)
+    else:
+        pass

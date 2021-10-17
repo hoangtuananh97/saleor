@@ -1,5 +1,4 @@
-from django.core.exceptions import ValidationError
-
+from saleor.csv.events import import_failed_event, import_success_event
 from saleor.graphql.core.mutations import BaseMutation
 from saleor_ai.models import SaleorAI
 
@@ -14,7 +13,7 @@ def validate(base_mutation, **data):
     return instance
 
 
-def import_saleor_ai(import_file, batch_data, batch_size):
+def import_saleor_ai(import_file, batch_data, user, batch_size):
     instances = []
     instances_error = []
     base_mutation = BaseMutation()
@@ -25,9 +24,15 @@ def import_saleor_ai(import_file, batch_data, batch_size):
         else:
             instances_error.append(instance)
     SaleorAI.objects.bulk_create(instances)
-    if instances_error:
-        raise ValidationError(
-            instances_error,
-            code="Validation Error",
+
+    if not instances_error:
+        import_success_event(import_file=import_file, **user)
+    else:
+        import_failed_event(
+            import_file=import_file,
+            user=user,
+            message=str(instances_error),
+            error_type="",
         )
 
+    return instances_error
