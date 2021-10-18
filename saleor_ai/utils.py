@@ -85,9 +85,9 @@ class BaseSyncSaleorAICommand(BaseCommand):
                 (item["article_code"], item["franchise_code"]), list()
             ).append(group_data)
 
-        listing = ProductVariantChannelListing.objects.filter(
-            Q(variant__sku__in=skus) | Q(channel__slug__in=slugs)
-        )
+        listing = ProductVariantChannelListing.objects.select_related(
+            "variant", "channel"
+        ).filter(Q(variant__sku__in=skus) | Q(channel__slug__in=slugs))
         for item in listing:
             sku = item.variant.sku
             slug = item.channel.slug

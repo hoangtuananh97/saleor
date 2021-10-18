@@ -10,8 +10,8 @@ class Command(BaseSyncSaleorAICommand):
     help = "Sync product class in Saleor AI to DB."
 
     def update_metadata(self):
-        qs_product_classes = (
-            ProductClassRecommendation.objects.qs_filter_current_previous_one_query()
+        qs_product_classes = ProductClassRecommendation.objects.qs_filter_current_previous_one_query().select_related(
+            "listing"
         )
         for item in qs_product_classes:
             listing = item.listing

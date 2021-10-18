@@ -11,7 +11,9 @@ class Command(BaseSyncSaleorAICommand):
 
     def update_metadata(self):
         qs_products_max_min = (
-            ProductMaxMin.objects.qs_filter_current_previous_one_query()
+            ProductMaxMin.objects.qs_filter_current_previous_one_query().select_related(
+                "listing"
+            )
         )
         for item in qs_products_max_min:
             listing = item.listing
