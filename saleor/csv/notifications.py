@@ -6,7 +6,7 @@ from ..core.utils import build_absolute_uri
 from ..plugins.manager import get_plugins_manager
 
 if TYPE_CHECKING:
-    from .models import ExportFile
+    from .models import ExportFile, ImportFile
 
 
 def get_default_export_payload(export_file: "ExportFile") -> dict:
@@ -47,3 +47,28 @@ def send_export_failed_info(export_file: "ExportFile"):
     }
     manager = get_plugins_manager()
     manager.notify(NotifyEventType.CSV_EXPORT_FAILED, payload)
+
+
+def get_default_import_payload(import_file: "ImportFile") -> dict:
+    user_id = import_file.user.id if import_file.user else None
+    user_email = import_file.user.email if import_file.user else None
+    return {
+        "user_id": user_id,
+        "user_email": user_email,
+        "id": import_file.id,
+        "status": import_file.status,
+        "message": import_file.message,
+        "created_at": import_file.created_at,
+        "updated_at": import_file.updated_at,
+    }
+
+
+def send_import_failed_info(import_file: "ImportFile"):
+    """Call PluginManager.notify to trigger the notification for failed import."""
+    payload = {
+        "import": get_default_import_payload(import_file),
+        "recipient_email": import_file.user.email if import_file.user else None,
+        **get_site_context(),
+    }
+    manager = get_plugins_manager()
+    manager.notify(NotifyEventType.CSV_IMPORT_FAILED, payload)

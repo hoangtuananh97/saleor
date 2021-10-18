@@ -1,17 +1,10 @@
-import csv
-from io import StringIO
 from typing import Dict, List, Mapping, Union
 
 import graphene
 from django.core.exceptions import ValidationError
 
-from saleor_ai.models import SaleorAI
-
-from ...core.permissions import (
-    AccountPermissions,
-    ProductMaxMinPermissions,
-    ProductPermissions,
-)
+from ...account.models import User
+from ...core.permissions import ProductMaxMinPermissions, ProductPermissions
 from ...csv import models as csv_models
 from ...csv.events import export_started_event
 from ...csv.tasks import (
@@ -273,80 +266,24 @@ class ImportSaleorAI(BaseMutation):
 
     class Meta:
         description = "Import CSV saleor AI."
-        permissions = (AccountPermissions.MANAGE_STAFF,)
+        permissions = ()
         error_type_class = UploadError
         error_type_field = "upload_errors"
 
     @classmethod
     def perform_mutation(cls, _root, info, **kwargs):
         batch_size = 1000
-        batch_data = []
-        model = SaleorAI
-        opts = model._meta
-        user = {
-            "user": info.context.user,
-        }
-        file_data = info.context.FILES.get(kwargs["file"]).read()
+        user = User.objects.get(email="admin@example.com")
+        # user = {
+        #     "user": info.context.user,
+        # }
+        # user = info.context.user
+        file = info.context.FILES.get(kwargs["file"])
+        file_data = file.read()
         content = file_data.decode()
-        csv_data = csv.reader(StringIO(content), delimiter=",")
-        import_file = csv_models.ImportFile.objects.create(**user)
-        for row in csv_data:
-            data = cls.read_one_row(row)
-            for _, value in data.items():
-                if any(value == field.name for field in opts.fields):
-                    continue
-            batch_data.append(row)
-        import_saleor_ai_task.delay(import_file.pk, batch_data, user, batch_size).get()
+        import_file = csv_models.ImportFile.objects.create(user=user)
+
+        import_saleor_ai_task.delay(import_file.pk, content, user.id, batch_size).get()
 
         import_file.refresh_from_db()
         return cls(import_file=import_file)
-
-    @classmethod
-    def read_one_row(cls, row):
-        return {
-            "scgh_mch3_code": row[0],
-            "scgh_mch3_desc": row[1],
-            "scgh_mch2_code": row[2],
-            "scgh_mch2_desc": row[3],
-            "scgh_mch1_code": row[4],
-            "scgh_mch1_desc": row[5],
-            "brand": row[6],
-            "article_code": row[7],
-            "article_name": row[8],
-            "item_flag": row[9],
-            "item_status": row[10],
-            "scgh_dc_item_flag": row[11],
-            "scgh_dc_stock": row[12],
-            "scgh_show_no_stock_flag": row[13],
-            "scgh_product_class": row[14],
-            "scgh_vmi_flag": True if row[15] == "X" else False,
-            "scgh_showroom_flag": True if row[16] == "X" else False,
-            "scgh_market_flag": True if row[17] == "X" else False,
-            "scgh_shop_flag": True if row[18] == "X" else False,
-            "sales_uom": row[19],
-            "sales_price": row[20],
-            "purchase_uom": row[21],
-            "purchase_price": row[22],
-            "purchase_group": row[23],
-            "moq": row[24],
-            "vendor_code": row[25],
-            "vendor_name": row[26],
-            "comp_code": row[27],
-            "comp_desc": row[28],
-            "dc_rdc_code": row[29],
-            "dc_rdc_desc": row[30],
-            "franchise_code": row[31],
-            "franchise_desc": row[32],
-            "actual_sales_value": row[33],
-            "actual_sales_qty": row[34],
-            "forecast_value": row[35],
-            "forecast_qty": row[36],
-            "safety_stock_qty": row[37],
-            "min_qty": row[38],
-            "max_qty": row[39],
-            "product_class_qty": row[40],
-            "product_class_value": row[41],
-            "product_class_default": row[42],
-            "start_of_week": row[43],
-            "start_of_month": row[44],
-        }

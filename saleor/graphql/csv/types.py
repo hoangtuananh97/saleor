@@ -152,4 +152,4 @@ class ImportFile(CountableDjangoObjectType):
 
     @staticmethod
     def resolve_events(root: models.ImportEvent, _info):
-        return root.import_events.all().order_by("pk")
+        return root.import_events.all().order_by("pk")  # type: ignore[attr-defined]
