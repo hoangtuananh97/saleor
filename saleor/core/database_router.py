@@ -22,4 +22,4 @@ class AIDatabaseRouter:
     def allow_migrate(self, db, app_label, model_name=None, **hints):
         if app_label in self.ai_app_labels:
             return db == "ai_db"
-        return False
+        return True
