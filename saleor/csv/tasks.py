@@ -109,26 +109,37 @@ def import_saleor_ai_task(
     import_file = ImportFile.objects.get(pk=import_file_id)
     csv_data = csv.reader(StringIO(content), delimiter=",")
     next(csv_data)
+    start_row = 1
     for row in csv_data:
         data = read_one_row(row)
         batch_data.append(data)
-        if len(batch_data) > batch_size:
-            group_batch_data.append(batch_data)
+        len_batch_data = len(batch_data)
+        if len_batch_data > batch_size:
+            batch_data_obj = {
+                "start_row": start_row,
+                "batch_data": batch_data,
+            }
+            group_batch_data.append(batch_data_obj)
             import_started_event(import_file=import_file, user=user)
+            start_row = start_row + len_batch_data
             batch_data = []
     if batch_data:
-        group_batch_data.append(batch_data)
+        batch_data_obj = {
+            "start_row": start_row,
+            "batch_data": batch_data,
+        }
+        group_batch_data.append(batch_data_obj)
         import_started_event(import_file=import_file, user=user)
 
     return chord(
-        import_saleor_ai_sub_task.s(import_file, item, user, batch_size)
+        import_saleor_ai_sub_task.s(import_file, item, user)
         for item in group_batch_data
     )(import_saleor_ai_result.s(import_file, user))
 
 
 @app.task()
-def import_saleor_ai_sub_task(import_file, batch_data, user, batch_size):
-    return import_saleor_ai(import_file, batch_data, user, batch_size)
+def import_saleor_ai_sub_task(import_file, batch_data, user):
+    return import_saleor_ai(import_file, batch_data, user)
 
 
 @app.task(on_success=on_task_success, on_failure=on_task_failure)

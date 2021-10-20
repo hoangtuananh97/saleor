@@ -94,7 +94,7 @@ class Migration(migrations.Migration):
                             ),
                             (
                                 "import_failed_info_sent",
-                                "Email with info that import failed was sent to the customer.", # NOQA
+                                "Email with info that import failed was sent to the customer.",  # NOQA
                             ),
                         ],
                         max_length=255,

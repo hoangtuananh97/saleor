@@ -13,24 +13,34 @@ from saleor.graphql.core.mutations import BaseMutation
 from saleor_ai.models import SaleorAI
 
 
-def validate(base_mutation, **data):
+def validate(base_mutation, count_row, **data):
     instance = SaleorAI()
     instance = base_mutation.construct_instance(instance, data)
     instance_error = None
     try:
         instance.full_clean()
     except ValidationError as error:
-        instance_error = error.messages
+        for key, value in error.message_dict.items():
+            instance_error = {
+                "position": {
+                    "column": key,
+                    "row": count_row,
+                },
+                "message": value[0],
+            }
         instance = None
     return instance, instance_error
 
 
-def import_saleor_ai(import_file, batch_data, user, batch_size):
+def import_saleor_ai(import_file, batch_data, user):
     instances = []
     instances_error = []
     base_mutation = BaseMutation()
+    count_row = batch_data["start_row"]
+    batch_data = batch_data["batch_data"]
     for data in batch_data:
-        instance, instance_error = validate(base_mutation, **data)
+        count_row = count_row + 1
+        instance, instance_error = validate(base_mutation, count_row, **data)
         if instance:
             instances.append(instance)
         else:
@@ -102,10 +112,11 @@ def read_one_row(row):
 
 
 def prepare_data_error_for_export(data_error):
-    data = []
-    for item in data_error:
-        data.append(prepare_data_error_for_one_row(item))
-    return data
+    return data_error
+    # data = []
+    # for item in data_error:
+    #     data.append(prepare_data_error_for_one_row(item))
+    # return data
 
 
 def prepare_data_error_for_one_row(item):

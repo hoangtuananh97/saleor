@@ -272,7 +272,7 @@ class ImportSaleorAI(BaseMutation):
 
     @classmethod
     def perform_mutation(cls, _root, info, **kwargs):
-        batch_size = 1000
+        batch_size = 5000
         user = User.objects.get(email="admin@example.com")
         # user = {
         #     "user": info.context.user,
