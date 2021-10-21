@@ -247,6 +247,7 @@ class CheckoutCreateInput(graphene.InputObjectType):
     language_code = graphene.Argument(
         LanguageCodeEnum, required=False, description="Checkout language code."
     )
+    requested_shipment_date = graphene.Date(description="requested shipment date")
 
 
 class CheckoutCreate(ModelMutation, I18nMixin):
@@ -330,7 +331,8 @@ class CheckoutCreate(ModelMutation, I18nMixin):
         if shipping_address:
             country = shipping_address.country.code
         else:
-            country = channel.default_country
+            # TODO: Error channel.default_country
+            country = "US"
 
         # Resolve and process the lines, retrieving the variants and quantities
         lines = data.pop("lines", None)
@@ -1445,3 +1447,18 @@ class CheckoutRemovePromoCode(BaseMutation):
         remove_promo_code_from_checkout(checkout_info, promo_code)
         manager.checkout_updated(checkout)
         return CheckoutRemovePromoCode(checkout=checkout)
+
+
+class PreOrderCustom(CheckoutCreate):
+    class Meta:
+        description = "Create a new checkout."
+        model = models.Checkout
+        return_field_name = "checkout"
+        error_type_class = CheckoutError
+        error_type_field = "checkout_errors"
+
+    @classmethod
+    @traced_atomic_transaction()
+    def save(cls, info, instance: models.Checkout, cleaned_input):
+        instance.is_preorder = True
+        super().save(info, instance, cleaned_input)

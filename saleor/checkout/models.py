@@ -106,6 +106,12 @@ class Checkout(ModelWithMetadata):
         max_length=35, choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE
     )
 
+    requested_shipment_date = models.DateField(
+        null=True,
+        blank=True,
+    )
+    is_preorder = models.BooleanField(default=False)
+
     class Meta(ModelWithMetadata.Meta):
         ordering = ("-last_change", "pk")
         permissions = (
