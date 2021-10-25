@@ -1,3 +1,4 @@
+import base64
 import csv
 from io import StringIO
 from typing import Dict, Union
@@ -5,6 +6,7 @@ from typing import Dict, Union
 from celery import chord
 
 from saleor_ai.models import SaleorAI
+from .utils.import_excel import ParserExcel
 
 from ..account.models import User
 from ..celeryconf import app
@@ -101,16 +103,26 @@ def import_saleor_ai_task(
     import_file_id: int,
     content,
     user_id,
+    file_type,
     batch_size,
 ):
+    start_row = 1
     batch_data = []
     group_batch_data = []
     user = User.objects.get(id=user_id)
     import_file = ImportFile.objects.get(pk=import_file_id)
-    csv_data = csv.reader(StringIO(content), delimiter=",")
-    next(csv_data)
-    start_row = 1
-    for row in csv_data:
+    if file_type == "csv":
+        content = csv.reader(StringIO(content), delimiter=",")
+        next(content)
+    else:
+        file_bytes_base64 = content.encode('ISO-8859-1')
+        content = base64.b64decode(file_bytes_base64)
+        parser_excel = ParserExcel(
+            excel_file=content, row_start_header=1, row_start_body=2
+        )
+        _, content = parser_excel.parser()
+
+    for row in content:
         data = read_one_row(row)
         batch_data.append(data)
         len_batch_data = len(batch_data)

@@ -1,3 +1,4 @@
+import base64
 from typing import Dict, List, Mapping, Union
 
 import graphene
@@ -25,6 +26,7 @@ from ..product.types.product_max_min import ProductMaxMin
 from ..warehouse.types import Warehouse
 from .enums import ExportScope, FileTypeEnum, ProductFieldEnum, ProductMaxMinFieldEnum
 from .types import ExportFile, ImportFile
+from ...csv.utils.import_excel import ParserExcel
 
 
 class ExportInfoInput(graphene.InputObjectType):
@@ -279,7 +281,8 @@ class ImportSaleorAI(BaseMutation):
         # }
         # user = info.context.user
         file = info.context.FILES.get(kwargs["file"])
-        if not file.content_type == "text/csv":
+        file_type = file.name.split(".")[1]
+        if not file_type in ["csv", "xlsx"]:
             raise ValidationError(
                 {
                     "file": ValidationError(
@@ -288,10 +291,15 @@ class ImportSaleorAI(BaseMutation):
                 }
             )
         file_data = file.read()
-        content = file_data.decode()
+        if file_type == "xlsx":
+            file_bytes_base64 = base64.b64encode(file_data)
+            content = file_bytes_base64.decode('ISO-8859-1')
+        else:
+            content = file_data.decode()
         import_file = csv_models.ImportFile.objects.create(user=user)
-
-        import_saleor_ai_task.delay(import_file.pk, content, user.id, batch_size).get()
+        import_saleor_ai_task.delay(
+            import_file.pk, content, user.id, file_type, batch_size
+        ).get()
 
         import_file.refresh_from_db()
         return cls(import_file=import_file)
