@@ -279,6 +279,14 @@ class ImportSaleorAI(BaseMutation):
         # }
         # user = info.context.user
         file = info.context.FILES.get(kwargs["file"])
+        if not file.content_type == "text/csv":
+            raise ValidationError(
+                {
+                    "file": ValidationError(
+                        "You must provide file csv.",
+                    )
+                }
+            )
         file_data = file.read()
         content = file_data.decode()
         import_file = csv_models.ImportFile.objects.create(user=user)
