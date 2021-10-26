@@ -3,6 +3,7 @@ from . import constants
 from .tasks import (
     send_email_with_link_to_download_file_task,
     send_export_failed_email_task,
+    send_import_failed_email_task,
     send_set_staff_password_email_task,
     send_staff_order_confirmation_email_task,
     send_staff_password_reset_email_task,
@@ -104,5 +105,24 @@ def send_staff_reset_password(payload: dict, config: dict, plugin_configuration:
             constants.STAFF_PASSWORD_RESET_DEFAULT_SUBJECT,
         )
         send_staff_password_reset_email_task.delay(
+            recipient_email, payload, config, subject, template
+        )
+
+
+def send_csv_import_failed(payload: dict, config: dict, plugin_configuration: list):
+    recipient_email = payload.get("recipient_email")
+    if recipient_email:
+        template = get_email_template_or_default(
+            plugin_configuration,
+            constants.CSV_IMPORT_FAILED_TEMPLATE_FIELD,
+            constants.CSV_IMPORT_FAILED_TEMPLATE_DEFAULT_TEMPLATE,
+            constants.DEFAULT_EMAIL_TEMPLATES_PATH,
+        )
+        subject = get_email_subject(
+            plugin_configuration,
+            constants.CSV_IMPORT_FAILED_DEFAULT_SUBJECT,
+            constants.CSV_IMPORT_FAILED_SUBJECT_FIELD,
+        )
+        send_import_failed_email_task.delay(
             recipient_email, payload, config, subject, template
         )

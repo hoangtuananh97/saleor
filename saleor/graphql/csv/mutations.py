@@ -1,24 +1,31 @@
+import base64
 from typing import Dict, List, Mapping, Union
 
 import graphene
 from django.core.exceptions import ValidationError
 
+from ...account.models import User
 from ...core.permissions import ProductMaxMinPermissions, ProductPermissions
 from ...csv import models as csv_models
 from ...csv.events import export_started_event
-from ...csv.tasks import export_products_max_min_task, export_products_task
+from ...csv.tasks import (
+    export_products_max_min_task,
+    export_products_task,
+    import_saleor_ai_task,
+)
 from ..attribute.types import Attribute
 from ..channel.types import Channel
 from ..core.enums import ExportErrorCode
 from ..core.mutations import BaseMutation
-from ..core.types.common import ExportError
+from ..core.types import Upload
+from ..core.types.common import ExportError, UploadError
 from ..product.filters import ProductFilterInput
 from ..product.filters_product_max_min import ProductMaxMinFilterInput
 from ..product.types import Product
 from ..product.types.product_max_min import ProductMaxMin
 from ..warehouse.types import Warehouse
 from .enums import ExportScope, FileTypeEnum, ProductFieldEnum, ProductMaxMinFieldEnum
-from .types import ExportFile
+from .types import ExportFile, ImportFile
 
 
 class ExportInfoInput(graphene.InputObjectType):
@@ -243,3 +250,55 @@ class ExportProductsMaxMin(BaseExportProducts):
         if fields:
             export_info["fields"] = fields
         return export_info
+
+
+class ImportSaleorAI(BaseMutation):
+    import_file = graphene.Field(
+        ImportFile,
+        description=(
+            "The newly created import file job which is responsible for import data."
+        ),
+    )
+
+    class Arguments:
+        file = Upload(
+            required=True, description="Represents a file in a multipart request."
+        )
+
+    class Meta:
+        description = "Import CSV saleor AI."
+        permissions = ()
+        error_type_class = UploadError
+        error_type_field = "upload_errors"
+
+    @classmethod
+    def perform_mutation(cls, _root, info, **kwargs):
+        batch_size = 5000
+        user = User.objects.get(email="admin@example.com")
+        # user = {
+        #     "user": info.context.user,
+        # }
+        # user = info.context.user
+        file = info.context.FILES.get(kwargs["file"])
+        file_type = file.name.split(".")[1]
+        if file_type not in ["csv", "xlsx"]:
+            raise ValidationError(
+                {
+                    "file": ValidationError(
+                        "You must provide file csv.",
+                    )
+                }
+            )
+        file_data = file.read()
+        if file_type == "xlsx":
+            file_bytes_base64 = base64.b64encode(file_data)
+            content = file_bytes_base64.decode("ISO-8859-1")
+        else:
+            content = file_data.decode()
+        import_file = csv_models.ImportFile.objects.create(user=user)
+        import_saleor_ai_task.delay(
+            import_file.pk, content, user.id, file_type, batch_size
+        ).get()
+
+        import_file.refresh_from_db()
+        return cls(import_file=import_file)

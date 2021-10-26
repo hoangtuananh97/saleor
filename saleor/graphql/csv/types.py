@@ -10,7 +10,7 @@ from ..app.types import App
 from ..core.connection import CountableDjangoObjectType
 from ..core.types.common import Job
 from ..utils import get_user_or_app_from_context
-from .enums import ExportEventEnum
+from .enums import ExportEventEnum, ImportEventEnum
 
 
 class ExportEvent(CountableDjangoObjectType):
@@ -94,3 +94,62 @@ class ExportFile(CountableDjangoObjectType):
     @staticmethod
     def resolve_events(root: models.ExportFile, _info):
         return root.events.all().order_by("pk")
+
+
+class ImportEvent(CountableDjangoObjectType):
+    date = graphene.types.datetime.DateTime(
+        description="Date when event happened at in ISO 8601 format.",
+        required=True,
+    )
+    type = ImportEventEnum(description="Import event type.", required=True)
+    user = graphene.Field(
+        User, description="User who performed the action.", required=False
+    )
+    message = graphene.String(
+        description="Content of the event.",
+        required=True,
+    )
+
+    class Meta:
+        description = "History log of import file."
+        model = models.ImportEvent
+        interfaces = [graphene.relay.Node]
+        only_fields = ["id"]
+
+    @staticmethod
+    def resolve_user(root: models.ImportEvent, info):
+        requestor = get_user_or_app_from_context(info.context)
+        if requestor_has_access(requestor, root.user, AccountPermissions.MANAGE_STAFF):
+            return root.user
+        raise PermissionDenied()
+
+    @staticmethod
+    def resolve_message(root: models.ImportEvent, _info):
+        return root.parameters.get("message", None)
+
+
+class ImportFile(CountableDjangoObjectType):
+    events = graphene.List(
+        graphene.NonNull(ImportEvent),
+        description="List of events associated with the import.",
+    )
+
+    class Meta:
+        description = "Represents a job data of imported file."
+        interfaces = [graphene.relay.Node, Job]
+        model = models.ImportFile
+        only_fields = [
+            "id",
+            "user",
+        ]
+
+    @staticmethod
+    def resolve_user(root: models.ImportEvent, info):
+        requestor = get_user_or_app_from_context(info.context)
+        if requestor_has_access(requestor, root.user, AccountPermissions.MANAGE_STAFF):
+            return root.user
+        raise PermissionDenied()
+
+    @staticmethod
+    def resolve_events(root: models.ImportEvent, _info):
+        return root.import_events.all().order_by("pk")  # type: ignore[attr-defined]

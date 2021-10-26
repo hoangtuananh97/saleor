@@ -20,6 +20,7 @@ from ..models import PluginConfiguration
 from . import constants
 from .notify_events import (
     send_csv_export_failed,
+    send_csv_import_failed,
     send_csv_product_export_success,
     send_set_staff_password_email,
     send_staff_order_confirmation,
@@ -35,6 +36,7 @@ class AdminTemplate:
     set_staff_password_email: Optional[str]
     csv_product_export_success: Optional[str]
     csv_export_failed: Optional[str]
+    csv_import_failed: Optional[str]
     staff_reset_password: Optional[str]
 
 
@@ -49,6 +51,7 @@ def get_admin_template_map(templates: AdminTemplate):
         AdminNotifyEvent.ACCOUNT_STAFF_RESET_PASSWORD: (
             templates.set_staff_password_email
         ),
+        AdminNotifyEvent.CSV_IMPORT_FAILED: templates.csv_import_failed,
     }
 
 
@@ -59,6 +62,7 @@ def get_admin_event_map():
         AdminNotifyEvent.ACCOUNT_STAFF_RESET_PASSWORD: send_staff_reset_password,
         AdminNotifyEvent.CSV_PRODUCT_EXPORT_SUCCESS: send_csv_product_export_success,
         AdminNotifyEvent.CSV_EXPORT_FAILED: send_csv_export_failed,
+        AdminNotifyEvent.CSV_IMPORT_FAILED: send_csv_import_failed,
     }
 
 
@@ -109,6 +113,10 @@ class AdminEmailPlugin(BasePlugin):
         {
             "name": constants.CSV_EXPORT_FAILED_TEMPLATE_FIELD,
             "value": DEFAULT_EMAIL_VALUE,
+        },
+        {
+            "name": constants.CSV_IMPORT_FAILED_TEMPLATE_FIELD,
+            "value": constants.CSV_IMPORT_FAILED_DEFAULT_SUBJECT,
         },
     ] + DEFAULT_EMAIL_CONFIGURATION  # type: ignore
 
@@ -163,6 +171,16 @@ class AdminEmailPlugin(BasePlugin):
             "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
             "label": "CSV export failed template",
         },
+        constants.CSV_IMPORT_FAILED_SUBJECT_FIELD: {
+            "type": ConfigurationTypeField.STRING,
+            "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
+            "label": "CSV import failed subject",
+        },
+        constants.CSV_IMPORT_FAILED_TEMPLATE_FIELD: {
+            "type": ConfigurationTypeField.MULTILINE,
+            "help_text": DEFAULT_TEMPLATE_HELP_TEXT,
+            "label": "CSV import failed template",
+        },
     }
     CONFIG_STRUCTURE.update(DEFAULT_EMAIL_CONFIG_STRUCTURE)
     CONFIG_STRUCTURE["host"][
@@ -215,6 +233,7 @@ class AdminEmailPlugin(BasePlugin):
             staff_reset_password=configuration[
                 constants.STAFF_PASSWORD_RESET_TEMPLATE_FIELD
             ],
+            csv_import_failed=configuration[constants.CSV_IMPORT_FAILED_TEMPLATE_FIELD],
         )
 
     def notify(self, event: NotifyEventType, payload: dict, previous_value):

@@ -1,5 +1,9 @@
 from ...celeryconf import app
-from ...csv.events import export_failed_info_sent_event, export_file_sent_event
+from ...csv.events import (
+    export_failed_info_sent_event,
+    export_file_sent_event,
+    import_failed_info_sent_event,
+)
 from ..email_common import EmailConfig, send_email
 
 
@@ -76,4 +80,21 @@ def send_staff_password_reset_email_task(
         context=payload,
         subject=subject,
         template_str=template,
+    )
+
+
+@app.task(compression="zlib")
+def send_import_failed_email_task(
+    recipient_email: str, payload: dict, config: dict, subject, template
+):
+    email_config = EmailConfig(**config)
+    send_email(
+        config=email_config,
+        recipient_list=[recipient_email],
+        subject=subject,
+        template_str=template,
+        context=payload,
+    )
+    import_failed_info_sent_event(
+        import_file_id=payload["export"]["id"], user_id=payload["import"].get("user_id")
     )

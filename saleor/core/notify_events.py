@@ -37,12 +37,14 @@ class AdminNotifyEvent:
     ACCOUNT_STAFF_RESET_PASSWORD = "account_staff_reset_password"
     CSV_PRODUCT_EXPORT_SUCCESS = "csv_export_products_success"
     CSV_EXPORT_FAILED = "csv_export_failed"
+    CSV_IMPORT_FAILED = "csv_import_failed"
     STAFF_ORDER_CONFIRMATION = "staff_order_confirmation"
 
     CHOICES = [
         ACCOUNT_SET_STAFF_PASSWORD,
         CSV_PRODUCT_EXPORT_SUCCESS,
         CSV_EXPORT_FAILED,
+        CSV_IMPORT_FAILED,
         STAFF_ORDER_CONFIRMATION,
         ACCOUNT_STAFF_RESET_PASSWORD,
     ]

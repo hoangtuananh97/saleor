@@ -6,7 +6,7 @@ from ..account.models import User
 from ..app.models import App
 from ..core.models import Job
 from ..core.utils.json_serializer import CustomJsonEncoder
-from . import ExportEvents
+from . import ExportEvents, ImportEvents
 
 
 class ExportFile(Job):
@@ -33,4 +33,25 @@ class ExportEvent(models.Model):
     )
     app = models.ForeignKey(
         App, related_name="export_csv_events", on_delete=models.SET_NULL, null=True
+    )
+
+
+class ImportFile(Job):
+    user = models.ForeignKey(
+        User, related_name="import_files", on_delete=models.CASCADE, null=True
+    )
+    content_file = models.FileField(upload_to="import_files", null=True)
+
+
+class ImportEvent(models.Model):
+    """Model used to store events that happened during the import file lifecycle."""
+
+    date = models.DateTimeField(default=timezone.now, editable=False)
+    type = models.CharField(max_length=255, choices=ImportEvents.CHOICES)
+    parameters = JSONField(blank=True, default=dict, encoder=CustomJsonEncoder)
+    import_file = models.ForeignKey(
+        ImportFile, related_name="import_events", on_delete=models.CASCADE
+    )
+    user = models.ForeignKey(
+        User, related_name="import_csv_events", on_delete=models.SET_NULL, null=True
     )
