@@ -70,7 +70,7 @@ class ParserExcel:
         :param start_header_row: row start reading
         :return:
         """
-        for col_index in range(1, self.TOTAL_COLUMNS):
+        for col_index in range(1, self.TOTAL_COLUMNS + 1):
             errcode = self.RET_OK
             header_data = sheet.cell(start_header_row, col_index).value
             if not header_data:
@@ -91,20 +91,10 @@ class ParserExcel:
         :param start_data_row:
         :return:
         """
-        for row_index in range(start_data_row, self.TOTAL_ROWS):
-            temp_data = []
+        for row_index in range(start_data_row, self.TOTAL_ROWS + 1):
+            temp_row = []
             for index in range(len(list_header)):
-                errcode = self.RET_OK
                 body_data = sheet.cell(row_index, list_header[index]["colIdx"]).value
-                if not body_data:
-                    errcode = self.RET_ERR
-                temp = {
-                    "rowIdx": row_index,
-                    "colIdx": index,
-                    "colData": body_data,
-                    "errCode": errcode
-                }
-                temp_data.append(temp)
-            # Add data to result list
-            list_body.append(temp_data)
+                temp_row.append(body_data)
+            list_body.append(temp_row)
         return self.RET_OK
