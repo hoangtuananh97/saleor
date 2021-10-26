@@ -27,7 +27,7 @@ def validate(base_mutation, count_row, **data):
     return instance, instance_error
 
 
-def import_saleor_ai(import_file, batch_data, user):
+def prepare_data_import(batch_data):
     instances = []
     instances_error_bulk_create = []
     instances_error = []
@@ -48,6 +48,13 @@ def import_saleor_ai(import_file, batch_data, user):
             data["error"] = instance_error
             instances_error.append(data)
             instances_error_bulk_create.append(data)
+    return instances, instances_error_bulk_create, instances_error
+
+
+def import_saleor_ai(import_file, batch_data, user):
+    instances, instances_error_bulk_create, instances_error = prepare_data_import(
+        batch_data
+    )
 
     try:
         SaleorAI.objects.bulk_create(instances)
