@@ -13,6 +13,7 @@ class ParserExcel:
         # get data
         data = parserExcel.excel_content
     """
+
     # Initializing index
     # define return
     RET_OK = 0
@@ -24,10 +25,10 @@ class ParserExcel:
     WRN_HELP_COL_EXCEL = _("Total columns in file fail !")
 
     # Initializing variable protect
-    _file_name = ''
+    _file_name = ""
     _excel_content = []
 
-    def __init__(self, excel_file, row_start_header=1, row_start_body=2, number_col=- 1):
+    def __init__(self, excel_file, row_start_header=1, row_start_body=2, number_col=-1):
         """
         :param excel_file: file path
         :param row_start_header: row number read header
@@ -78,7 +79,7 @@ class ParserExcel:
             tem_header = {
                 "colIdx": col_index,
                 "nameHeader": header_data,
-                "errCode": errcode
+                "errCode": errcode,
             }
             list_result.append(tem_header)
         return self.RET_OK

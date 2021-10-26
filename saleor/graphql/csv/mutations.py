@@ -26,7 +26,6 @@ from ..product.types.product_max_min import ProductMaxMin
 from ..warehouse.types import Warehouse
 from .enums import ExportScope, FileTypeEnum, ProductFieldEnum, ProductMaxMinFieldEnum
 from .types import ExportFile, ImportFile
-from ...csv.utils.import_excel import ParserExcel
 
 
 class ExportInfoInput(graphene.InputObjectType):
@@ -282,7 +281,7 @@ class ImportSaleorAI(BaseMutation):
         # user = info.context.user
         file = info.context.FILES.get(kwargs["file"])
         file_type = file.name.split(".")[1]
-        if not file_type in ["csv", "xlsx"]:
+        if file_type not in ["csv", "xlsx"]:
             raise ValidationError(
                 {
                     "file": ValidationError(
@@ -293,7 +292,7 @@ class ImportSaleorAI(BaseMutation):
         file_data = file.read()
         if file_type == "xlsx":
             file_bytes_base64 = base64.b64encode(file_data)
-            content = file_bytes_base64.decode('ISO-8859-1')
+            content = file_bytes_base64.decode("ISO-8859-1")
         else:
             content = file_data.decode()
         import_file = csv_models.ImportFile.objects.create(user=user)

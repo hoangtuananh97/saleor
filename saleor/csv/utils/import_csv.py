@@ -21,19 +21,15 @@ def validate(base_mutation, count_row, **data):
         instance.full_clean()
     except ValidationError as error:
         for key, value in error.message_dict.items():
-            instance_error = {
-                "position": {
-                    "column": key,
-                    "row": count_row,
-                },
-                "message": value[0],
-            }
+            instance_error = instance_error_for_one_row(key, count_row, value[0])
         instance = None
+
     return instance, instance_error
 
 
 def import_saleor_ai(import_file, batch_data, user):
     instances = []
+    instances_error_bulk_create = []
     instances_error = []
     base_mutation = BaseMutation()
     count_row = batch_data["start_row"]
@@ -43,10 +39,20 @@ def import_saleor_ai(import_file, batch_data, user):
         instance, instance_error = validate(base_mutation, count_row, **data)
         if instance:
             instances.append(instance)
+            instance_error_bulk_create = instance_error_for_one_row(
+                "", count_row, "Error Server, You need import."
+            )
+            data["error"] = instance_error
+            instances_error_bulk_create.append(instance_error_bulk_create)
         else:
             data["error"] = instance_error
             instances_error.append(data)
-    SaleorAI.objects.bulk_create(instances)
+            instances_error_bulk_create.append(data)
+
+    try:
+        SaleorAI.objects.bulk_create(instances)
+    except Exception:
+        instances_error = instances_error_bulk_create
 
     if not instances_error:
         import_success_event(import_file=import_file, user=user)
@@ -59,6 +65,16 @@ def import_saleor_ai(import_file, batch_data, user):
         )
 
     return instances_error
+
+
+def instance_error_for_one_row(column, row, message):
+    return {
+        "position": {
+            "column": column,
+            "row": row,
+        },
+        "message": message,
+    }
 
 
 def read_one_row(row):

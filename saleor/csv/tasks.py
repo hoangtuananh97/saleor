@@ -6,7 +6,6 @@ from typing import Dict, Union
 from celery import chord
 
 from saleor_ai.models import SaleorAI
-from .utils.import_excel import ParserExcel
 
 from ..account.models import User
 from ..celeryconf import app
@@ -21,6 +20,7 @@ from .utils.import_csv import (
     import_saleor_ai,
     read_one_row,
 )
+from .utils.import_excel import ParserExcel
 
 
 def on_task_failure(self, exc, task_id, args, kwargs, einfo):
@@ -115,7 +115,7 @@ def import_saleor_ai_task(
         content = csv.reader(StringIO(content), delimiter=",")
         next(content)
     else:
-        file_bytes_base64 = content.encode('ISO-8859-1')
+        file_bytes_base64 = content.encode("ISO-8859-1")
         content = base64.b64decode(file_bytes_base64)
         parser_excel = ParserExcel(
             excel_file=content, row_start_header=1, row_start_body=2
